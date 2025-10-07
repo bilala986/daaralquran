@@ -1,0 +1,13 @@
+.arabic-text {
+    font-family: 'Reem Kufi', sans-serif;
+    font-size: 1.5rem;
+    word-spacing: 0.5rem;
+}
+
+
+.btn.disabled, 
+.btn:disabled {
+    opacity: 0.6;
+    pointer-events: none;
+    cursor: not-allowed;
+}
