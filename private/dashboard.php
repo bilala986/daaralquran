@@ -20,6 +20,7 @@ $fullname = $_SESSION['fullname'];
         <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400..700&display=swap" rel="stylesheet">
         <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
         <link href="../css/dashboard.css" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     </head>
     <body class="bg-light">
 
@@ -49,7 +50,9 @@ $fullname = $_SESSION['fullname'];
                 <div class="d-flex gap-2">
                     <button class="btn btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
                     <button class="btn btn-outline-secondary"><i class="bi bi-filter"></i> Filter</button>
-                    <button id="addButton" class="btn btn-success"><i class="bi bi-plus-lg"></i> Add</button>
+                    <button id="addButton" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                        <i class="bi bi-plus-lg"></i> Add
+                    </button>
                 </div>
             </div>
 
@@ -86,44 +89,8 @@ $fullname = $_SESSION['fullname'];
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody class="text-center">
-                                    <tr>
-                                        <td>student1@example.com</td>
-                                        <td>Fatimah Ali</td>
-                                        <td>07123 456789</td>
-                                        <td>Aisha Ali</td>
-                                        <td>07123 111222</td>
-                                        <td>Tafseer of Juz 30</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></button>
-                                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>student2@example.com</td>
-                                        <td>Zahra Ahmed</td>
-                                        <td>07987 654321</td>
-                                        <td>Maryam Ahmed</td>
-                                        <td>07987 222333</td>
-                                        <td>40 Hadeeth of Imam Nawwawi</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></button>
-                                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>student3@example.com</td>
-                                        <td>Layla Khan</td>
-                                        <td>07700 900123</td>
-                                        <td>Sumayyah Khan</td>
-                                        <td>07700 456789</td>
-                                        <td>None</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></button>
-                                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                                        </td>
-                                    </tr>
-                                </tbody>
+                                <!-- Empty tbody: will be populated dynamically by dashboard.js -->
+                                <tbody class="text-center"></tbody>
                             </table>
                         </div>
                     </div>
@@ -153,7 +120,7 @@ $fullname = $_SESSION['fullname'];
                             </button>
 
                             <div class="d-flex align-items-center gap-2">
-                                <input type="date" id="attendanceDate" class="form-control form-control-sm" value="2025-10-03">
+                                <input type="date" id="attendanceDate" class="form-control form-control-sm" value="<?= date('Y-m-d') ?>">
                             </div>
 
                             <button id="nextDate" class="btn btn-outline-secondary btn-sm">
@@ -173,30 +140,7 @@ $fullname = $_SESSION['fullname'];
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>1</td>
-                                        <td>Aisha Khan</td>
-                                        <td><span class="badge bg-secondary">—</span></td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>2</td>
-                                        <td>Fatimah Ali</td>
-                                        <td><span class="badge bg-secondary">—</span></td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>3</td>
-                                        <td>Zahra Ahmed</td>
-                                        <td><span class="badge bg-secondary">—</span></td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></button>
-                                        </td>
-                                    </tr>
+                                    <!-- You can keep this static for now or later load dynamically -->
                                 </tbody>
                             </table>
                         </div>
@@ -215,7 +159,7 @@ $fullname = $_SESSION['fullname'];
                                     <i class="bi bi-chevron-left"></i> Previous
                                 </button>
 
-                                <input type="month" id="feesMonth" class="form-control form-control-sm" value="2025-10">
+                                <input type="month" id="feesMonth" class="form-control form-control-sm" value="<?= date('Y-m') ?>">
 
                                 <button id="nextMonth" class="btn btn-outline-secondary btn-sm">
                                     Next <i class="bi bi-chevron-right"></i>
@@ -230,47 +174,137 @@ $fullname = $_SESSION['fullname'];
                                     <tr>
                                         <th>#</th>
                                         <th>Student Name</th>
-                                        <th>Month</th>
                                         <th>Amount</th>
                                         <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>1</td>
-                                        <td>Aisha Khan</td>
-                                        <td>October 2025</td>
-                                        <td>£10</td>
-                                        <td><span class="badge bg-success">Paid</span></td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>2</td>
-                                        <td>Fatimah Ali</td>
-                                        <td>October 2025</td>
-                                        <td>£10</td>
-                                        <td><span class="badge bg-warning text-dark">Pending</span></td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></button>
-                                        </td>
-                                    </tr>
+                                    <!-- Populated dynamically -->
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-
             </div>
-
-
         </div>
 
-        <!-- Bootstrap Icons + JS -->
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+        <!-- Add Student Modal -->
+        <div class="modal fade" id="addStudentModal" tabindex="-1" aria-labelledby="addStudentLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="addStudentLabel">Add New Student</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="addStudentForm">
+                        <div class="modal-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" name="email" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Full Name</label>
+                                    <input type="text" class="form-control" name="full_name" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="text" class="form-control" name="phone_number" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Emergency Contact Name</label>
+                                    <input type="text" class="form-control" name="emergency_contact_name" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Emergency Contact Number</label>
+                                    <input type="text" class="form-control" name="emergency_contact_number" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Course Completed</label>
+                                    <select id="add_course_completed" name="course_completed" class="form-select" required>
+                                        <option value="Tafseer of Juz 30">Tafseer of Juz 30</option>
+                                        <option value="Seerah Course">Seerah Course</option>
+                                        <option value="40 Hadeeth of Imam Nawwawi">40 Hadeeth of Imam Nawwawi</option>
+                                        <option value="None">None</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                    <input type="text" id="add_course_completed_other" class="form-control mt-2" placeholder="Enter course" style="display:none;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-success">Add Student</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ✏️ Edit Student Modal -->
+        <div class="modal fade" id="editStudentModal" tabindex="-1" aria-labelledby="editStudentModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <form id="editStudentForm">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title" id="editStudentModalLabel">Edit Student</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="edit_student_id" name="id">
+
+                            <div class="mb-3">
+                                <label for="edit_email" class="form-label">Email</label>
+                                <input type="email" id="edit_email" name="email" class="form-control" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="edit_full_name" class="form-label">Full Name</label>
+                                <input type="text" id="edit_full_name" name="full_name" class="form-control" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="edit_phone_number" class="form-label">Phone Number</label>
+                                <input type="text" id="edit_phone_number" name="phone_number" class="form-control" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="edit_emergency_contact_name" class="form-label">Emergency Contact Name</label>
+                                <input type="text" id="edit_emergency_contact_name" name="emergency_contact_name" class="form-control">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="edit_emergency_contact_number" class="form-label">Emergency Contact Number</label>
+                                <input type="text" id="edit_emergency_contact_number" name="emergency_contact_number" class="form-control">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="edit_course_completed" class="form-label">Course Completed</label>
+                                <select id="edit_course_completed" name="course_completed" class="form-select" required>
+                                    <option value="Tafseer of Juz 30">Tafseer of Juz 30</option>
+                                    <option value="Seerah Course">Seerah Course</option>
+                                    <option value="40 Hadeeth of Imam Nawwawi">40 Hadeeth of Imam Nawwawi</option>
+                                    <option value="None">None</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <input type="text" id="edit_course_completed_other" class="form-control mt-2" placeholder="Enter course" style="display:none;">
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- Bootstrap JS -->
         <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
         <script src="../js/dashboard.js"></script>
 
