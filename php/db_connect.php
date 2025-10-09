@@ -1,8 +1,8 @@
 <?php
-$host = "localhost";      // usually 'localhost'
-$user = "root";           // your phpMyAdmin username
-$pass = "";               // your phpMyAdmin password (empty by default in XAMPP)
-$db   = "daaralquran"; // change this to your actual DB name
+$host = "localhost";
+$user = "bilazqnw_daaralquran_user";
+$pass = "Smash3cv4tc!";
+$db   = "bilazqnw_daaralquran";
 
 $conn = new mysqli($host, $user, $pass, $db);
 

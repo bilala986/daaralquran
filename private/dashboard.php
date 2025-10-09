@@ -302,6 +302,46 @@ $fullname = $_SESSION['fullname'];
             </div>
         </div>
 
+        <!-- Delete Student Confirmation Modal -->
+        <div class="modal fade" id="deleteStudentModal" tabindex="-1" aria-labelledby="deleteStudentModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title" id="deleteStudentModalLabel">Delete Student</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p id="deleteStudentMessage">Are you sure you want to delete this student?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" id="confirmDeleteStudentBtn" class="btn btn-danger">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ✅ Attendance Edit Modal -->
+        <div class="modal fade" id="attendanceModal" tabindex="-1" aria-labelledby="attendanceModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="attendanceModalLabel">Mark Attendance</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body text-center">
+                        <p class="mb-3 fs-5">Mark attendance for:</p>
+                        <h5 id="studentName" class="fw-bold text-primary"></h5>
+
+                        <div class="d-flex justify-content-center gap-3 mt-4">
+                            <button id="markPresent" class="btn btn-success px-4">Present</button>
+                            <button id="markAbsent" class="btn btn-danger px-4">Absent</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
 
         <!-- Bootstrap JS -->

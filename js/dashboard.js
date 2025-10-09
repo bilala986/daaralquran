@@ -12,6 +12,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const studentsTableBody = document.querySelector("#students table tbody");
     const attendanceTableBody = document.querySelector("#attendance table tbody");
     const feesTableBody = document.querySelector("#fees table tbody");
+    let studentToDeleteId = null;
+    let selectedRow = null;
 
     // ----------------------------
     // 🗓 Attendance Navigation
@@ -81,6 +83,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (activeId === "fees") loadFees();
     }
 
+    
+    
+    
+    
+    
     // ----------------------------
     // 💰 Fees Month Navigation
     // ----------------------------
@@ -97,6 +104,17 @@ document.addEventListener("DOMContentLoaded", () => {
         nextMonthBtn.addEventListener("click", () => changeMonth("next"));
     }
 
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     // ----------------------------
     // 🧩 Add Student Form
     // ----------------------------
@@ -192,8 +210,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 <td>${student.emergency_contact_number || "-"}</td>
                 <td>${student.course_completed || "-"}</td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary me-1 btn-edit-student" data-id="${student.id}">
-                        <i class="bi bi-pencil"></i>
+                    <button class="btn btn-primary btn-sm me-1 btn-edit-student" data-id="${student.id}">
+                        <i class="bi bi-pencil-square"></i> Edit
                     </button>
                     <button class="btn btn-sm btn-outline-danger btn-delete-student" data-id="${student.id}">
                         <i class="bi bi-trash"></i>
@@ -203,6 +221,29 @@ document.addEventListener("DOMContentLoaded", () => {
         `).join("");
     }
 
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     // ----------------------------
     // ✏️ Edit Student Functionality
     // ----------------------------
@@ -315,6 +356,66 @@ document.addEventListener("DOMContentLoaded", () => {
     
     
     
+    // ----------------------------
+    // ✏️ Delete Student Functionality
+    // ----------------------------
+    document.addEventListener("click", (e) => {
+        const deleteBtn = e.target.closest(".btn-delete-student");
+        if (!deleteBtn) return;
+
+        studentToDeleteId = deleteBtn.getAttribute("data-id");
+        if (!studentToDeleteId) return;
+
+        // Find the student name from allStudents array
+        const student = allStudents.find(s => s.id === studentToDeleteId);
+        const studentName = student ? student.full_name : "this student";
+
+        // Update modal message
+        const deleteMessage = document.getElementById("deleteStudentMessage");
+        deleteMessage.textContent = `Are you sure you want to delete "${studentName}"? This will also remove their attendance and fees records.`;
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById("deleteStudentModal"));
+        modal.show();
+    });
+
+    // Handle confirm delete button
+    const confirmDeleteBtn = document.getElementById("confirmDeleteStudentBtn");
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener("click", async () => {
+            if (!studentToDeleteId) return;
+
+            try {
+                const response = await fetch("../php/delete_student.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id: studentToDeleteId })
+                });
+                const result = await response.json();
+
+                if (result.status === "success") {
+                    showToast("Student deleted successfully ✅", "success");
+                    await loadStudents();
+                    loadAttendance();
+                    loadFees();
+                } else {
+                    showToast(`Error deleting student: ${result.message || "Unknown error"}`, "danger");
+                }
+            } catch (err) {
+                console.error("Delete student error:", err);
+                showToast("Network or server error while deleting student.", "danger");
+            }
+
+            // Hide modal
+            const modalEl = document.getElementById("deleteStudentModal");
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            modalInstance.hide();
+            studentToDeleteId = null;
+        });
+    }
+    
+    
+    
     
     
     
@@ -331,31 +432,138 @@ document.addEventListener("DOMContentLoaded", () => {
     
 
     // ----------------------------
-    // 🧾 Load Attendance Table
+    // 🧾 Load Attendance Table (with backend loading + saving)
     // ----------------------------
     async function loadAttendance() {
         if (!attendanceTableBody) return;
         attendanceTableBody.innerHTML = `<tr><td colspan="4" class="text-muted">Loading...</td></tr>`;
 
-        const students = await fetchStudents();
+        // Get date selected from input (default = today)
+        const selectedDate = document.getElementById("attendanceDate")?.value || new Date().toISOString().split("T")[0];
+
+        // Fetch students and their attendance status for the selected date
+        const [students, attendanceData] = await Promise.all([
+            fetchStudents(),
+            fetch(`../php/get_attendance.php?date=${selectedDate}`).then(res => res.json()).catch(() => [])
+        ]);
+
         if (!students.length) {
             attendanceTableBody.innerHTML = `<tr><td colspan="4" class="text-muted">No students found.</td></tr>`;
             return;
         }
 
-        attendanceTableBody.innerHTML = students.map((student, index) => `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${student.full_name}</td>
-                <td><span class="badge text-bg-secondary">–</span></td>
-                <td>
-                    <button class="btn btn-success btn-sm me-2" disabled><i class="bi bi-check-lg"></i> Present</button>
-                    <button class="btn btn-danger btn-sm" disabled><i class="bi bi-x-lg"></i> Absent</button>
-                </td>
-            </tr>
-        `).join("");
+        // Create a quick lookup map for attendance by student_id
+        const attendanceMap = {};
+        attendanceData.forEach(a => {
+            attendanceMap[a.student_id] = a.status;
+        });
+
+        attendanceTableBody.innerHTML = students.map((student, index) => {
+            const status = attendanceMap[student.id] || "–";
+            const badgeClass =
+                status === "Present" ? "text-bg-success" :
+                status === "Absent" ? "text-bg-danger" :
+                "text-bg-secondary";
+
+            return `
+                <tr data-student-id="${student.id}">
+                    <td>${index + 1}</td>
+                    <td>${student.full_name}</td>
+                    <td class="status-cell"><span class="badge ${badgeClass}">${status}</span></td>
+                    <td>
+                        <button class="btn btn-primary btn-sm edit-attendance">
+                            <i class="bi bi-pencil-square"></i> Edit
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join("");
+
+        let selectedRow = null;
+
+        // Handle "Edit" button clicks
+        document.querySelectorAll(".edit-attendance").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                const row = e.target.closest("tr");
+                const studentName = row.children[1].textContent;
+                selectedRow = row;
+                document.getElementById("studentName").textContent = studentName;
+
+                const modal = new bootstrap.Modal(document.getElementById("attendanceModal"));
+                modal.show();
+            });
+        });
+
+        // ✅ Function to update attendance in backend
+        async function updateAttendanceStatus(selectedRow, status) {
+            const studentId = selectedRow.dataset.studentId;
+
+            try {
+                const response = await fetch("../php/update_attendance.php", {
+                    method: "POST",
+                    body: new URLSearchParams({
+                        student_id: studentId,
+                        status: status,
+                        date: selectedDate
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.status === "success") {
+                    const statusCell = selectedRow.querySelector(".status-cell");
+                    const badgeClass = status === "Present" ? "text-bg-success" : "text-bg-danger";
+                    statusCell.innerHTML = `<span class="badge ${badgeClass}">${status}</span>`;
+                    showToast(`Attendance marked as ${status}`, "success");
+                } else {
+                    showToast(`Error: ${result.message}`, "danger");
+                }
+            } catch (error) {
+                console.error("Update error:", error);
+                showToast("Network error while updating attendance", "danger");
+            }
+
+            bootstrap.Modal.getInstance(document.getElementById("attendanceModal")).hide();
+        }
+
+        // ✅ Handle Present/Absent button clicks
+        document.getElementById("markPresent").onclick = () => {
+            if (!selectedRow) return;
+            updateAttendanceStatus(selectedRow, "Present");
+        };
+
+        document.getElementById("markAbsent").onclick = () => {
+            if (!selectedRow) return;
+            updateAttendanceStatus(selectedRow, "Absent");
+        };
     }
 
+
+
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     // ----------------------------
     // 💰 Fees Month Navigation
     // ----------------------------
@@ -397,8 +605,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 <td><span class="badge text-bg-secondary">–</span></td>
                 <td><span class="badge text-bg-secondary">Pending</span></td>
                 <td>
-                    <button class="btn btn-outline-primary btn-sm" disabled>
-                        <i class="bi bi-pencil"></i> Edit
+                    <button class="btn btn-primary btn-sm" disabled>
+                        <i class="bi bi-pencil-square"></i> Edit
                     </button>
                 </td>
             </tr>
