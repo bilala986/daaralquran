@@ -101,20 +101,33 @@ $fullname = $_SESSION['fullname'];
                     <div class="card p-3 shadow-sm">
                         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                             <h5 class="text-primary mb-2 mb-md-0">Attendance</h5>
+                        </div>
 
-                            <!-- Class Selection & Next Class Date -->
-                            <div class="d-flex align-items-center gap-2">
-                                <select id="attendanceClassSelect" class="form-select form-select-sm">
+                        <div class="row mb-3">
+                            <!-- Dropdown on left -->
+                            <div class="col-12 col-md-4 d-flex justify-content-start">
+                                <select id="attendanceClassSelect" class="form-select form-select-sm w-auto">
                                     <option value="Thursday Adults">Thursday Adults</option>
                                     <option value="Friday Adults">Friday Adults</option>
                                     <option value="Friday Kids">Friday Kids</option>
                                 </select>
+                            </div>
 
+                            <!-- Button centered -->
+                            <div class="col-12 col-md-4 d-flex justify-content-center align-items-center">
                                 <button id="nextClassBtn" class="btn btn-outline-primary btn-sm">
-                                    Next Class Date
+                                    Calendar
                                 </button>
                             </div>
+
+                            <!-- Date on right -->
+                            <div class="col-12 col-md-4 d-flex justify-content-end align-items-center">
+                                <span id="selectedDate" class="fw-bold text-primary"></span>
+                            </div>
                         </div>
+
+                        <!-- Calendar container -->
+                        <div id="calendarContainer" class="mt-2 d-flex flex-wrap justify-content-center gap-1"></div>
 
                         <!-- Attendance Table -->
                         <div class="table-responsive">
@@ -134,7 +147,7 @@ $fullname = $_SESSION['fullname'];
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Fees -->
                 <div class="tab-pane fade" id="fees" role="tabpanel">
                     <div class="card p-3 shadow-sm">

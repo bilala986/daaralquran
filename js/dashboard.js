@@ -15,12 +15,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const attendanceTableBody = document.querySelector("#attendance table tbody");
     const classSelect = document.getElementById("attendanceClassSelect");
     const nextClassBtn = document.getElementById("nextClassBtn");
+    const selectedDateEl = document.getElementById("selectedDate"); // <-- updated to match new HTML
+    const calendarContainer = document.getElementById("calendarContainer"); // <-- updated to match new HTML
+    calendarContainer.style.display = "none";
+    
+    // --- Attendance Modal Elements ---
     const attendanceModal = new bootstrap.Modal(document.getElementById("attendanceModal"));
     const studentNameEl = document.getElementById("studentName");
-    const selectedDateEl = document.getElementById("selectedAttendanceDate");
-    const calendarContainer = document.getElementById("attendanceCalendar");
     const markPresentBtn = document.getElementById("markPresent");
     const markAbsentBtn = document.getElementById("markAbsent");
+
 
     // --- Edit Student Modal Elements ---
     const editCourseDropdown = document.getElementById("edit_course_completed");
@@ -31,6 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let selectedStudentId = null;
     let selectedAttendanceDate = new Date();
     let allStudents = [];
+    let isCalendarVisible = false;
 
     // ----------------------------
     // ➕ Add Button State
@@ -323,26 +328,58 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        attendanceTableBody.innerHTML = filtered.map((student, index) => `
-            <tr data-id="${student.id}">
-                <td>${index + 1}</td>
-                <td>${student.full_name}</td>
-                <td><span class="badge text-bg-secondary">–</span></td>
-                <td>
-                    <button class="btn btn-primary btn-sm btn-edit-attendance" data-id="${student.id}">
-                        <i class="bi bi-pencil-square"></i> Edit
-                    </button>
-                </td>
-            </tr>
-        `).join("");
+        // ✅ Pass class_name + date now
+        const date = selectedAttendanceDate.toISOString().split("T")[0];
+        const attendanceMap = await fetchAttendanceByDate(selectedClass, date);
+
+        attendanceTableBody.innerHTML = filtered.map((student, index) => {
+            const status = attendanceMap[student.id] || "–";
+            let badgeClass = "text-bg-secondary";
+            if (status === "Present") badgeClass = "text-bg-success";
+            if (status === "Absent") badgeClass = "text-bg-danger";
+
+            return `
+                <tr data-id="${student.id}">
+                    <td>${index + 1}</td>
+                    <td>${student.full_name}</td>
+                    <td><span class="badge ${badgeClass}">${status}</span></td>
+                    <td>
+                        <button class="btn btn-primary btn-sm btn-edit-attendance" data-id="${student.id}">
+                            <i class="bi bi-pencil-square"></i> Edit
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join("");
     }
+
+
+
+
+    async function fetchAttendanceByDate(className, date) {
+        try {
+            const res = await fetch(`../php/get_attendance.php?class_name=${encodeURIComponent(className)}&date=${encodeURIComponent(date)}`);
+            const data = await res.json();
+            // Expect format: [{ student_id: "5", status: "Present" }, ...]
+            const map = {};
+            data.forEach(rec => (map[rec.student_id] = rec.status));
+            return map;
+        } catch (err) {
+            console.error(err);
+            return {};
+        }
+    }
+
+
+
+
 
     // ----------------------------
     // ✨ Next Class Date / Custom Calendar
     // ----------------------------
     function getNextClassDate(className) {
         const today = new Date();
-        let targetDay = className.toLowerCase().includes("friday") ? 5 : 4; // Thursday = 4, Friday = 5
+        let targetDay = className.toLowerCase().includes("friday") ? 5 : 4; // Thursday=4, Friday=5
         const dayDiff = (targetDay + 7 - today.getDay()) % 7 || 7;
         const nextDate = new Date(today);
         nextDate.setDate(today.getDate() + dayDiff);
@@ -352,13 +389,13 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderCalendar(date, allowedWeekday) {
         if (!calendarContainer) return;
         calendarContainer.innerHTML = "";
+
         const year = date.getFullYear();
         const month = date.getMonth();
-        const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
+        const lastDay = new Date(year, month + 1, 0).getDate();
 
-        for (let d = 1; d <= lastDay.getDate(); d++) {
-            const current = new Date(year, month, d);
+        for (let d = 1; d <= lastDay; d++) {
+            const current = new Date(Date.UTC(year, month, d));
             const btn = document.createElement("button");
             btn.className = "btn btn-sm rounded";
             btn.textContent = d;
@@ -368,9 +405,34 @@ document.addEventListener("DOMContentLoaded", () => {
                 btn.classList.add("btn-secondary");
             } else {
                 btn.classList.add("btn-outline-primary");
+
+                // Check if this is the currently selected date → keep highlighted
+                if (
+                    selectedAttendanceDate &&
+                    current.toISOString().split("T")[0] === selectedAttendanceDate.toISOString().split("T")[0]
+                ) {
+                    btn.classList.remove("btn-outline-primary");
+                    btn.classList.add("selected-date-btn");
+                }
+
                 btn.addEventListener("click", () => {
                     selectedAttendanceDate = current;
                     selectedDateEl.textContent = current.toISOString().split("T")[0];
+
+                    // Remove highlight from all buttons
+                    calendarContainer.querySelectorAll("button").forEach(b => {
+                        b.classList.remove("selected-date-btn");
+                        if (!b.disabled) {
+                            b.classList.add("btn-outline-primary");
+                        }
+                    });
+
+                    // Highlight the clicked button
+                    btn.classList.remove("btn-outline-primary");
+                    btn.classList.add("selected-date-btn");
+
+                    // ✅ Reload status for selected date
+                    loadAttendance();
                 });
             }
 
@@ -378,16 +440,42 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+
+    // Show next class date & calendar on button click
     if (nextClassBtn) {
         nextClassBtn.addEventListener("click", () => {
+            isCalendarVisible = !isCalendarVisible; // toggle
+
+            if (isCalendarVisible) {
+                // Show calendar
+                selectedAttendanceDate = getNextClassDate(classSelect.value);
+                selectedDateEl.textContent = selectedAttendanceDate.toISOString().split("T")[0];
+                const weekday = classSelect.value.toLowerCase().includes("friday") ? 5 : 4;
+                renderCalendar(selectedAttendanceDate, weekday);
+                calendarContainer.style.display = "flex";
+            } else {
+                // Hide calendar
+                calendarContainer.innerHTML = "";
+                calendarContainer.style.display = "none";
+                selectedDateEl.textContent = ""; // optional: clear date too
+            }
+        });
+    }
+
+
+    // Update calendar & date automatically when switching classes
+    if (classSelect) {
+        classSelect.addEventListener("change", () => {
+            loadAttendance();
+
             selectedAttendanceDate = getNextClassDate(classSelect.value);
             selectedDateEl.textContent = selectedAttendanceDate.toISOString().split("T")[0];
+
             const weekday = classSelect.value.toLowerCase().includes("friday") ? 5 : 4;
             renderCalendar(selectedAttendanceDate, weekday);
         });
     }
 
-    classSelect.addEventListener("change", loadAttendance);
 
     // ----------------------------
     // ✏️ Edit Attendance Modal
