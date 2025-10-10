@@ -1,64 +1,44 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const prevBtn = document.getElementById("prevDate");
-    const nextBtn = document.getElementById("nextDate");
-    const dateInput = document.getElementById("attendanceDate");
-    const classSelect = document.getElementById("classSelect");
-    const form = document.getElementById("addStudentForm");
+    // ----------------------------
+    // Elements
+    // ----------------------------
     const addButton = document.getElementById("addButton");
     const tabs = document.querySelectorAll('#dashboardTabs button[data-bs-toggle="tab"]');
+    const studentsTableBody = document.querySelector("#students table tbody");
+    const feesTableBody = document.querySelector("#fees table tbody");
     const feesMonthInput = document.getElementById("feesMonth");
     const prevMonthBtn = document.getElementById("prevMonth");
     const nextMonthBtn = document.getElementById("nextMonth");
-    const studentsTableBody = document.querySelector("#students table tbody");
+    const form = document.getElementById("addStudentForm");
+
+    // --- Attendance Elements ---
     const attendanceTableBody = document.querySelector("#attendance table tbody");
-    const feesTableBody = document.querySelector("#fees table tbody");
+    const classSelect = document.getElementById("attendanceClassSelect");
+    const nextClassBtn = document.getElementById("nextClassBtn");
+    const attendanceModal = new bootstrap.Modal(document.getElementById("attendanceModal"));
+    const studentNameEl = document.getElementById("studentName");
+    const selectedDateEl = document.getElementById("selectedAttendanceDate");
+    const calendarContainer = document.getElementById("attendanceCalendar");
+    const markPresentBtn = document.getElementById("markPresent");
+    const markAbsentBtn = document.getElementById("markAbsent");
+
+    // --- Edit Student Modal Elements ---
+    const editCourseDropdown = document.getElementById("edit_course_completed");
+    const editCourseOther = document.getElementById("edit_course_completed_other");
+    const editClassDropdown = document.getElementById("edit_class_name");
+
     let studentToDeleteId = null;
-    let selectedRow = null;
-
-    // ----------------------------
-    // 🗓 Attendance Navigation
-    // ----------------------------
-    function getClassDayOffset() {
-        const selected = classSelect.value;
-        if (selected.includes("Thursday")) return 4;
-        if (selected.includes("Friday")) return 5;
-        return 4;
-    }
-
-    function changeWeek(direction) {
-        let currentDate = new Date(dateInput.value);
-        if (isNaN(currentDate)) currentDate = new Date();
-        const offset = direction === "next" ? 7 : -7;
-        currentDate.setDate(currentDate.getDate() + offset);
-        dateInput.value = currentDate.toISOString().split("T")[0];
-    }
-
-    if (nextBtn && prevBtn) {
-        nextBtn.addEventListener("click", () => changeWeek("next"));
-        prevBtn.addEventListener("click", () => changeWeek("prev"));
-    }
-
-    if (classSelect) {
-        classSelect.addEventListener("change", () => {
-            const selectedDay = getClassDayOffset();
-            let date = new Date(dateInput.value);
-            if (isNaN(date)) date = new Date();
-            while (date.getDay() !== selectedDay) {
-                date.setDate(date.getDate() + 1);
-            }
-            dateInput.value = date.toISOString().split("T")[0];
-        });
-    }
+    let selectedStudentId = null;
+    let selectedAttendanceDate = new Date();
+    let allStudents = [];
 
     // ----------------------------
     // ➕ Add Button State
     // ----------------------------
     function updateAddButtonState(activeTabId) {
         if (!addButton) return;
-
         const disableTabs = ["attendance", "fees"];
         const isDisabled = disableTabs.includes(activeTabId);
-
         addButton.disabled = isDisabled;
         addButton.classList.toggle("disabled", isDisabled);
     }
@@ -83,38 +63,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (activeId === "fees") loadFees();
     }
 
-    
-    
-    
-    
-    
-    // ----------------------------
-    // 💰 Fees Month Navigation
-    // ----------------------------
-    function changeMonth(direction) {
-        if (!feesMonthInput) return;
-        const [year, month] = feesMonthInput.value.split("-").map(Number);
-        const date = new Date(year, month - 1);
-        date.setMonth(date.getMonth() + (direction === "next" ? 1 : -1));
-        feesMonthInput.value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-    }
-
-    if (prevMonthBtn && nextMonthBtn) {
-        prevMonthBtn.addEventListener("click", () => changeMonth("prev"));
-        nextMonthBtn.addEventListener("click", () => changeMonth("next"));
-    }
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     // ----------------------------
     // 🧩 Add Student Form
     // ----------------------------
@@ -122,7 +70,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const addCourseDropdown = document.getElementById("add_course_completed");
         const addCourseOther = document.getElementById("add_course_completed_other");
 
-        // Show/hide "Other" input
         addCourseDropdown.addEventListener("change", () => {
             const isOther = addCourseDropdown.value === "Other";
             addCourseOther.style.display = isOther ? "block" : "none";
@@ -132,8 +79,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
+            const formData = new FormData(form);
 
-            // Handle custom "Other" course
             if (addCourseDropdown.value === "Other") {
                 const customCourse = addCourseOther.value.trim();
                 if (!customCourse) {
@@ -141,17 +88,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     addCourseOther.focus();
                     return;
                 }
-                const formData = new FormData(form);
-                formData.set("course_completed", customCourse); // ✅ ensures correct submission
-                await submitAddStudentForm(formData);
-            } else {
-                const formData = new FormData(form);
-                await submitAddStudentForm(formData);
+                formData.set("course_completed", customCourse);
             }
+
+            await submitAddStudentForm(formData);
         });
     }
 
-    // Helper function to handle add form submission
     async function submitAddStudentForm(formData) {
         try {
             const response = await fetch("../php/add_student.php", { method: "POST", body: formData });
@@ -175,18 +118,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ----------------------------
-    // 📋 Load Students from DB
+    // 📋 Fetch Students
     // ----------------------------
-    let allStudents = [];
-
     async function fetchStudents() {
         try {
-            const response = await fetch("../php/get_students.php");
-            if (!response.ok) throw new Error(`Server error: ${response.status}`);
-            allStudents = await response.json();
+            const res = await fetch("../php/get_students.php");
+            if (!res.ok) throw new Error("Server error");
+            allStudents = await res.json();
             return allStudents;
-        } catch (error) {
-            console.error("Error fetching students:", error);
+        } catch (err) {
+            console.error("Error fetching students:", err);
             return [];
         }
     }
@@ -201,7 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        studentsTableBody.innerHTML = students.map(student => `
+        studentsTableBody.innerHTML = students.map((student, index) => `
             <tr>
                 <td>${student.email}</td>
                 <td>${student.full_name}</td>
@@ -209,6 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <td>${student.emergency_contact_name || "-"}</td>
                 <td>${student.emergency_contact_number || "-"}</td>
                 <td>${student.course_completed || "-"}</td>
+                <td>${student.class_name || "-"}</td>
                 <td>
                     <button class="btn btn-primary btn-sm me-1 btn-edit-student" data-id="${student.id}">
                         <i class="bi bi-pencil-square"></i> Edit
@@ -221,35 +163,9 @@ document.addEventListener("DOMContentLoaded", () => {
         `).join("");
     }
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     // ----------------------------
-    // ✏️ Edit Student Functionality
+    // ✏️ Edit Student
     // ----------------------------
-    const editCourseDropdown = document.getElementById("edit_course_completed");
-    const editCourseOther = document.getElementById("edit_course_completed_other");
-
     if (editCourseDropdown) {
         editCourseDropdown.addEventListener("change", () => {
             const isOther = editCourseDropdown.value === "Other";
@@ -264,18 +180,17 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!editBtn) return;
 
         const studentId = editBtn.getAttribute("data-id");
-        const student = allStudents.find(s => s.id === studentId);
+        const student = allStudents.find(s => s.id == studentId);
         if (!student) return;
 
-        // Fill modal fields
         document.getElementById("edit_student_id").value = student.id;
         document.getElementById("edit_email").value = student.email;
         document.getElementById("edit_full_name").value = student.full_name;
         document.getElementById("edit_phone_number").value = student.phone_number;
         document.getElementById("edit_emergency_contact_name").value = student.emergency_contact_name || "";
         document.getElementById("edit_emergency_contact_number").value = student.emergency_contact_number || "";
+        if (editClassDropdown) editClassDropdown.value = student.class_name || "";
 
-        // Handle course dropdown and "Other" input
         const knownCourses = ["Tafseer of Juz 30", "Seerah Course", "40 Hadeeth of Imam Nawwawi", "None"];
         if (knownCourses.includes(student.course_completed)) {
             editCourseDropdown.value = student.course_completed;
@@ -294,10 +209,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (editForm) {
         editForm.addEventListener("submit", async (e) => {
             e.preventDefault();
-
             const formData = new FormData(editForm);
+            const selectedClass = editClassDropdown?.value || "";
+            formData.set("class_name", selectedClass);
 
-            // Handle "Other" course properly
             if (editCourseDropdown.value === "Other") {
                 const customCourse = editCourseOther.value.trim();
                 if (!customCourse) {
@@ -305,16 +220,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     editCourseOther.focus();
                     return;
                 }
-                formData.set("course_completed", customCourse); // ✅ key fix for editing
+                formData.set("course_completed", customCourse);
             }
 
             try {
-                const response = await fetch("../php/update_student.php", {
-                    method: "POST",
-                    body: formData
-                });
-                const result = await response.json();
-
+                const res = await fetch("../php/update_student.php", { method: "POST", body: formData });
+                const result = await res.json();
                 if (result.status === "success") {
                     showToast("Student updated successfully ✅", "success");
                     bootstrap.Modal.getInstance(document.getElementById("editStudentModal")).hide();
@@ -322,15 +233,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 } else {
                     showToast(`Error updating student: ${result.message || "Unknown error"}`, "danger");
                 }
-            } catch (error) {
-                console.error("Update error:", error);
+            } catch (err) {
+                console.error(err);
                 showToast("Network or server error while updating student.", "danger");
             }
         });
     }
 
     // ----------------------------
-    // ✅ Reusable Toast Function
+    // ✅ Toast Function
     // ----------------------------
     function showToast(message, type = "success") {
         const toast = document.createElement("div");
@@ -347,52 +258,35 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => toast.remove(), 3500);
     }
 
-
-    
-    
-    
-    
-    
-    
-    
-    
     // ----------------------------
-    // ✏️ Delete Student Functionality
+    // ✏️ Delete Student
     // ----------------------------
     document.addEventListener("click", (e) => {
         const deleteBtn = e.target.closest(".btn-delete-student");
         if (!deleteBtn) return;
 
         studentToDeleteId = deleteBtn.getAttribute("data-id");
-        if (!studentToDeleteId) return;
-
-        // Find the student name from allStudents array
-        const student = allStudents.find(s => s.id === studentToDeleteId);
+        const student = allStudents.find(s => s.id == studentToDeleteId);
         const studentName = student ? student.full_name : "this student";
 
-        // Update modal message
-        const deleteMessage = document.getElementById("deleteStudentMessage");
-        deleteMessage.textContent = `Are you sure you want to delete "${studentName}"? This will also remove their attendance and fees records.`;
+        document.getElementById("deleteStudentMessage").textContent = 
+            `Are you sure you want to delete "${studentName}"? This will also remove their attendance and fees records.`;
 
-        // Show modal
-        const modal = new bootstrap.Modal(document.getElementById("deleteStudentModal"));
-        modal.show();
+        new bootstrap.Modal(document.getElementById("deleteStudentModal")).show();
     });
 
-    // Handle confirm delete button
     const confirmDeleteBtn = document.getElementById("confirmDeleteStudentBtn");
     if (confirmDeleteBtn) {
         confirmDeleteBtn.addEventListener("click", async () => {
             if (!studentToDeleteId) return;
 
             try {
-                const response = await fetch("../php/delete_student.php", {
+                const res = await fetch("../php/delete_student.php", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ id: studentToDeleteId })
                 });
-                const result = await response.json();
-
+                const result = await res.json();
                 if (result.status === "success") {
                     showToast("Student deleted successfully ✅", "success");
                     await loadStudents();
@@ -402,170 +296,148 @@ document.addEventListener("DOMContentLoaded", () => {
                     showToast(`Error deleting student: ${result.message || "Unknown error"}`, "danger");
                 }
             } catch (err) {
-                console.error("Delete student error:", err);
+                console.error(err);
                 showToast("Network or server error while deleting student.", "danger");
             }
 
-            // Hide modal
-            const modalEl = document.getElementById("deleteStudentModal");
-            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            const modalInstance = bootstrap.Modal.getInstance(document.getElementById("deleteStudentModal"));
             modalInstance.hide();
             studentToDeleteId = null;
         });
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 
     // ----------------------------
-    // 🧾 Load Attendance Table (with backend loading + saving)
+    // 🗓 Attendance Table
     // ----------------------------
     async function loadAttendance() {
         if (!attendanceTableBody) return;
-        attendanceTableBody.innerHTML = `<tr><td colspan="4" class="text-muted">Loading...</td></tr>`;
 
-        // Get date selected from input (default = today)
-        const selectedDate = document.getElementById("attendanceDate")?.value || new Date().toISOString().split("T")[0];
+        attendanceTableBody.innerHTML = `<tr><td colspan="4" class="text-muted py-3">Loading...</td></tr>`;
 
-        // Fetch students and their attendance status for the selected date
-        const [students, attendanceData] = await Promise.all([
-            fetchStudents(),
-            fetch(`../php/get_attendance.php?date=${selectedDate}`).then(res => res.json()).catch(() => [])
-        ]);
+        const students = await fetchStudents();
+        const selectedClass = classSelect.value;
+        const filtered = students.filter(s => s.class_name === selectedClass);
 
-        if (!students.length) {
-            attendanceTableBody.innerHTML = `<tr><td colspan="4" class="text-muted">No students found.</td></tr>`;
+        if (!filtered.length) {
+            attendanceTableBody.innerHTML = `<tr><td colspan="4" class="text-muted py-3">No students in this class.</td></tr>`;
             return;
         }
 
-        // Create a quick lookup map for attendance by student_id
-        const attendanceMap = {};
-        attendanceData.forEach(a => {
-            attendanceMap[a.student_id] = a.status;
-        });
-
-        attendanceTableBody.innerHTML = students.map((student, index) => {
-            const status = attendanceMap[student.id] || "–";
-            const badgeClass =
-                status === "Present" ? "text-bg-success" :
-                status === "Absent" ? "text-bg-danger" :
-                "text-bg-secondary";
-
-            return `
-                <tr data-student-id="${student.id}">
-                    <td>${index + 1}</td>
-                    <td>${student.full_name}</td>
-                    <td class="status-cell"><span class="badge ${badgeClass}">${status}</span></td>
-                    <td>
-                        <button class="btn btn-primary btn-sm edit-attendance">
-                            <i class="bi bi-pencil-square"></i> Edit
-                        </button>
-                    </td>
-                </tr>
-            `;
-        }).join("");
-
-        let selectedRow = null;
-
-        // Handle "Edit" button clicks
-        document.querySelectorAll(".edit-attendance").forEach(btn => {
-            btn.addEventListener("click", (e) => {
-                const row = e.target.closest("tr");
-                const studentName = row.children[1].textContent;
-                selectedRow = row;
-                document.getElementById("studentName").textContent = studentName;
-
-                const modal = new bootstrap.Modal(document.getElementById("attendanceModal"));
-                modal.show();
-            });
-        });
-
-        // ✅ Function to update attendance in backend
-        async function updateAttendanceStatus(selectedRow, status) {
-            const studentId = selectedRow.dataset.studentId;
-
-            try {
-                const response = await fetch("../php/update_attendance.php", {
-                    method: "POST",
-                    body: new URLSearchParams({
-                        student_id: studentId,
-                        status: status,
-                        date: selectedDate
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.status === "success") {
-                    const statusCell = selectedRow.querySelector(".status-cell");
-                    const badgeClass = status === "Present" ? "text-bg-success" : "text-bg-danger";
-                    statusCell.innerHTML = `<span class="badge ${badgeClass}">${status}</span>`;
-                    showToast(`Attendance marked as ${status}`, "success");
-                } else {
-                    showToast(`Error: ${result.message}`, "danger");
-                }
-            } catch (error) {
-                console.error("Update error:", error);
-                showToast("Network error while updating attendance", "danger");
-            }
-
-            bootstrap.Modal.getInstance(document.getElementById("attendanceModal")).hide();
-        }
-
-        // ✅ Handle Present/Absent button clicks
-        document.getElementById("markPresent").onclick = () => {
-            if (!selectedRow) return;
-            updateAttendanceStatus(selectedRow, "Present");
-        };
-
-        document.getElementById("markAbsent").onclick = () => {
-            if (!selectedRow) return;
-            updateAttendanceStatus(selectedRow, "Absent");
-        };
+        attendanceTableBody.innerHTML = filtered.map((student, index) => `
+            <tr data-id="${student.id}">
+                <td>${index + 1}</td>
+                <td>${student.full_name}</td>
+                <td><span class="badge text-bg-secondary">–</span></td>
+                <td>
+                    <button class="btn btn-primary btn-sm btn-edit-attendance" data-id="${student.id}">
+                        <i class="bi bi-pencil-square"></i> Edit
+                    </button>
+                </td>
+            </tr>
+        `).join("");
     }
 
-
-
-
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     // ----------------------------
-    // 💰 Fees Month Navigation
+    // ✨ Next Class Date / Custom Calendar
+    // ----------------------------
+    function getNextClassDate(className) {
+        const today = new Date();
+        let targetDay = className.toLowerCase().includes("friday") ? 5 : 4; // Thursday = 4, Friday = 5
+        const dayDiff = (targetDay + 7 - today.getDay()) % 7 || 7;
+        const nextDate = new Date(today);
+        nextDate.setDate(today.getDate() + dayDiff);
+        return nextDate;
+    }
+
+    function renderCalendar(date, allowedWeekday) {
+        if (!calendarContainer) return;
+        calendarContainer.innerHTML = "";
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+
+        for (let d = 1; d <= lastDay.getDate(); d++) {
+            const current = new Date(year, month, d);
+            const btn = document.createElement("button");
+            btn.className = "btn btn-sm rounded";
+            btn.textContent = d;
+
+            if (current.getDay() !== allowedWeekday) {
+                btn.disabled = true;
+                btn.classList.add("btn-secondary");
+            } else {
+                btn.classList.add("btn-outline-primary");
+                btn.addEventListener("click", () => {
+                    selectedAttendanceDate = current;
+                    selectedDateEl.textContent = current.toISOString().split("T")[0];
+                });
+            }
+
+            calendarContainer.appendChild(btn);
+        }
+    }
+
+    if (nextClassBtn) {
+        nextClassBtn.addEventListener("click", () => {
+            selectedAttendanceDate = getNextClassDate(classSelect.value);
+            selectedDateEl.textContent = selectedAttendanceDate.toISOString().split("T")[0];
+            const weekday = classSelect.value.toLowerCase().includes("friday") ? 5 : 4;
+            renderCalendar(selectedAttendanceDate, weekday);
+        });
+    }
+
+    classSelect.addEventListener("change", loadAttendance);
+
+    // ----------------------------
+    // ✏️ Edit Attendance Modal
+    // ----------------------------
+    document.addEventListener("click", (e) => {
+        const editBtn = e.target.closest(".btn-edit-attendance");
+        if (!editBtn) return;
+
+        selectedStudentId = editBtn.dataset.id;
+        const student = allStudents.find(s => s.id == selectedStudentId);
+        if (!student) return;
+
+        studentNameEl.textContent = student.full_name;
+        selectedAttendanceDate = getNextClassDate(student.class_name);
+        selectedDateEl.textContent = selectedAttendanceDate.toISOString().split("T")[0];
+        const weekday = student.class_name.toLowerCase().includes("friday") ? 5 : 4;
+        renderCalendar(selectedAttendanceDate, weekday);
+
+        attendanceModal.show();
+    });
+
+    async function markAttendance(status) {
+        if (!selectedStudentId || !selectedAttendanceDate) return;
+
+        const formData = new FormData();
+        formData.append("student_id", selectedStudentId);
+        formData.append("status", status);
+        formData.append("date", selectedAttendanceDate.toISOString().split("T")[0]);
+
+        try {
+            const res = await fetch("../php/mark_attendance.php", { method: "POST", body: formData });
+            const result = await res.json();
+            if (result.status === "success") {
+                showToast(`Attendance marked ${status}`, "success");
+                attendanceModal.hide();
+                loadAttendance();
+            } else {
+                showToast(result.message || "Error marking attendance", "danger");
+            }
+        } catch (err) {
+            console.error(err);
+            showToast("Network error marking attendance", "danger");
+        }
+    }
+
+    if (markPresentBtn) markPresentBtn.addEventListener("click", () => markAttendance("Present"));
+    if (markAbsentBtn) markAbsentBtn.addEventListener("click", () => markAttendance("Absent"));
+
+    // ----------------------------
+    // 💰 Fees Table
     // ----------------------------
     function changeMonth(direction) {
         if (!feesMonthInput) return;
@@ -573,17 +445,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const date = new Date(year, month - 1);
         date.setMonth(date.getMonth() + (direction === "next" ? 1 : -1));
         feesMonthInput.value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-        loadFees(); // reload fees for new month
+        loadFees();
     }
 
-    if (prevMonthBtn && nextMonthBtn) {
-        prevMonthBtn.addEventListener("click", () => changeMonth("prev"));
-        nextMonthBtn.addEventListener("click", () => changeMonth("next"));
-    }
+    if (prevMonthBtn) prevMonthBtn.addEventListener("click", () => changeMonth("prev"));
+    if (nextMonthBtn) nextMonthBtn.addEventListener("click", () => changeMonth("next"));
 
-    // ----------------------------
-    // 💵 Load Fees Table (Month Hidden from UI)
-    // ----------------------------
     async function loadFees() {
         if (!feesTableBody) return;
         feesTableBody.innerHTML = `<tr><td colspan="5" class="text-muted">Loading...</td></tr>`;
@@ -594,10 +461,8 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // Get currently selected month (YYYY-MM)
         const currentMonth = feesMonthInput ? feesMonthInput.value : new Date().toISOString().slice(0, 7);
 
-        // Populate fees table with student data for that month
         feesTableBody.innerHTML = students.map((student, index) => `
             <tr data-student-id="${student.id}" data-month="${currentMonth}">
                 <td>${index + 1}</td>
@@ -613,4 +478,9 @@ document.addEventListener("DOMContentLoaded", () => {
         `).join("");
     }
 
+    // ----------------------------
+    // Initial Load
+    // ----------------------------
+    loadAttendance();
+    loadFees();
 });

@@ -102,30 +102,18 @@ $fullname = $_SESSION['fullname'];
                         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                             <h5 class="text-primary mb-2 mb-md-0">Attendance</h5>
 
-                            <!-- Class Selector -->
+                            <!-- Class Selection & Next Class Date -->
                             <div class="d-flex align-items-center gap-2">
-                                <label for="classSelect" class="fw-semibold me-1">Class:</label>
-                                <select id="classSelect" class="form-select form-select-sm w-auto">
-                                    <option selected>Thursday (Adults)</option>
-                                    <option>Friday (Adults)</option>
-                                    <option>Friday (Kids)</option>
+                                <select id="attendanceClassSelect" class="form-select form-select-sm">
+                                    <option value="Thursday Adults">Thursday Adults</option>
+                                    <option value="Friday Adults">Friday Adults</option>
+                                    <option value="Friday Kids">Friday Kids</option>
                                 </select>
+
+                                <button id="nextClassBtn" class="btn btn-outline-primary btn-sm">
+                                    Next Class Date
+                                </button>
                             </div>
-                        </div>
-
-                        <!-- Date Navigation -->
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <button id="prevDate" class="btn btn-outline-secondary btn-sm">
-                                <i class="bi bi-chevron-left"></i> Previous
-                            </button>
-
-                            <div class="d-flex align-items-center gap-2">
-                                <input type="date" id="attendanceDate" class="form-control form-control-sm" value="<?= date('Y-m-d') ?>">
-                            </div>
-
-                            <button id="nextDate" class="btn btn-outline-secondary btn-sm">
-                                Next <i class="bi bi-chevron-right"></i>
-                            </button>
                         </div>
 
                         <!-- Attendance Table -->
@@ -140,13 +128,13 @@ $fullname = $_SESSION['fullname'];
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- You can keep this static for now or later load dynamically -->
+                                    <!-- Populated dynamically via dashboard.js -->
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
-
+                
                 <!-- Fees -->
                 <div class="tab-pane fade" id="fees" role="tabpanel">
                     <div class="card p-3 shadow-sm">
@@ -221,6 +209,7 @@ $fullname = $_SESSION['fullname'];
                                     <label class="form-label">Emergency Contact Number</label>
                                     <input type="text" class="form-control" name="emergency_contact_number" required>
                                 </div>
+
                                 <div class="col-md-6">
                                     <label class="form-label">Course Completed</label>
                                     <select id="add_course_completed" name="course_completed" class="form-select" required>
@@ -230,7 +219,17 @@ $fullname = $_SESSION['fullname'];
                                         <option value="None">None</option>
                                         <option value="Other">Other</option>
                                     </select>
-                                    <input type="text" id="add_course_completed_other" class="form-control mt-2" placeholder="Enter course" style="display:none;">
+                                    <input type="text" id="add_course_completed_other" name="course_completed_other" class="form-control mt-2" placeholder="Enter course" style="display:none;">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="add_class_name" class="form-label">Class</label>
+                                    <select id="add_class_name" name="class_name" class="form-select" required>
+                                        <option value="" disabled selected>Select class</option>
+                                        <option value="Thursday Adults">Thursday Adults</option>
+                                        <option value="Friday Adults">Friday Adults</option>
+                                        <option value="Friday Kids">Friday Kids</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -242,7 +241,7 @@ $fullname = $_SESSION['fullname'];
                 </div>
             </div>
         </div>
-        
+
         <!-- ✏️ Edit Student Modal -->
         <div class="modal fade" id="editStudentModal" tabindex="-1" aria-labelledby="editStudentModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -289,7 +288,17 @@ $fullname = $_SESSION['fullname'];
                                     <option value="None">None</option>
                                     <option value="Other">Other</option>
                                 </select>
-                                <input type="text" id="edit_course_completed_other" class="form-control mt-2" placeholder="Enter course" style="display:none;">
+                                <input type="text" id="edit_course_completed_other" name="course_completed_other" class="form-control mt-2" placeholder="Enter course" style="display:none;">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="edit_class_name" class="form-label">Class</label>
+                                <select id="edit_class_name" name="class_name" class="form-select" required>
+                                    <option value="" disabled>Select class</option>
+                                    <option value="Thursday Adults">Thursday Adults</option>
+                                    <option value="Friday Adults">Friday Adults</option>
+                                    <option value="Friday Kids">Friday Kids</option>
+                                </select>
                             </div>
                         </div>
 
@@ -301,6 +310,7 @@ $fullname = $_SESSION['fullname'];
                 </div>
             </div>
         </div>
+
 
         <!-- Delete Student Confirmation Modal -->
         <div class="modal fade" id="deleteStudentModal" tabindex="-1" aria-labelledby="deleteStudentModalLabel" aria-hidden="true">
@@ -321,7 +331,7 @@ $fullname = $_SESSION['fullname'];
             </div>
         </div>
         
-        <!-- ✅ Attendance Edit Modal -->
+        <!-- Attendance Edit Modal -->
         <div class="modal fade" id="attendanceModal" tabindex="-1" aria-labelledby="attendanceModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content border-0 shadow">
@@ -334,6 +344,18 @@ $fullname = $_SESSION['fullname'];
                         <p class="mb-3 fs-5">Mark attendance for:</p>
                         <h5 id="studentName" class="fw-bold text-primary"></h5>
 
+                        <!-- Selected Date -->
+                        <div class="mb-3">
+                            <label class="form-label">Selected Date</label>
+                            <p class="fw-bold">Date: <span id="selectedAttendanceDate"><?= date('Y-m-d') ?></span></p>
+                        </div>
+
+                        <!-- Custom Calendar Container -->
+                        <div id="attendanceCalendar" class="d-flex flex-wrap gap-2 justify-content-center mb-3">
+                            <!-- Dates generated dynamically -->
+                        </div>
+
+                        <!-- Present/Absent Buttons -->
                         <div class="d-flex justify-content-center gap-3 mt-4">
                             <button id="markPresent" class="btn btn-success px-4">Present</button>
                             <button id="markAbsent" class="btn btn-danger px-4">Absent</button>
@@ -342,6 +364,8 @@ $fullname = $_SESSION['fullname'];
                 </div>
             </div>
         </div>
+
+
 
 
         <!-- Bootstrap JS -->

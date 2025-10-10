@@ -2,17 +2,41 @@
 header('Content-Type: application/json');
 include 'db_connect.php';
 
-$date = $_GET['date'] ?? date('Y-m-d');
+$attendance = [];
 
-$stmt = $conn->prepare("SELECT student_id, status FROM attendance WHERE date = ?");
-$stmt->bind_param("s", $date);
-$stmt->execute();
+$class_name = $_GET['class_name'] ?? '';
+$date = $_GET['date'] ?? '';
 
-$result = $stmt->get_result();
-$attendance = $result->fetch_all(MYSQLI_ASSOC);
+if ($class_name && $date) {
+    $sql = "
+        SELECT a.id, a.student_id, s.full_name, a.status, a.date
+        FROM attendance a
+        JOIN student_details s ON a.student_id = s.id
+        WHERE s.class_name = ? AND a.date = ?
+        ORDER BY s.full_name
+    ";
+    
+    $stmt = $conn->prepare($sql);
+    if ($stmt) {
+        $stmt->bind_param("ss", $class_name, $date);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        while ($row = $result->fetch_assoc()) {
+            $attendance[] = $row;
+        }
+        $stmt->close();
+    } else {
+        http_response_code(500);
+        echo json_encode(["status" => "error", "message" => $conn->error]);
+        $conn->close();
+        exit;
+    }
+} else {
+    http_response_code(400);
+    echo json_encode(["status" => "error", "message" => "Missing class_name or date"]);
+    $conn->close();
+    exit;
+}
 
-$stmt->close();
 $conn->close();
-
-echo json_encode($attendance);
-?>
+echo json_encode($attendance, JSON_PRETTY_PRINT);

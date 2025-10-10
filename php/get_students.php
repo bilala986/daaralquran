@@ -4,7 +4,7 @@ include 'db_connect.php';
 
 $students = [];
 
-$sql = "SELECT id, email, full_name, phone_number, emergency_contact_name, emergency_contact_number, course_completed, date_added
+$sql = "SELECT id, email, full_name, phone_number, emergency_contact_name, emergency_contact_number, course_completed, class_name, date_added
         FROM student_details
         ORDER BY id DESC";
 
