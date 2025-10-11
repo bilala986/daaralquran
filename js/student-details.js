@@ -95,7 +95,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const classVal = document.getElementById("filterClassModal")?.value || "";
 
         const filtered = students.filter(s => {
-            const matchesSearch = !q || `${s.full_name} ${s.email} ${s.phone_number}`.toLowerCase().includes(q);
+            const haystack = [
+                s.full_name,
+                s.email,
+                s.phone_number,
+                s.emergency_contact_name,
+                s.emergency_contact_number
+            ].join(" ").toLowerCase();
+
+            const matchesSearch = !q || haystack.includes(q);
             const matchesCourse = !courseVal || s.course_completed === courseVal;
             const matchesClass = !classVal || s.class_name === classVal;
             return matchesSearch && matchesCourse && matchesClass;
@@ -103,6 +111,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         renderStudents(filtered);
     }
+
+
 
 
 
@@ -305,7 +315,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     
-    
+    // ✅ Live search while typing
+    if (searchInput) {
+        searchInput.addEventListener("input", () => {
+            const q = searchInput.value.trim().toLowerCase();
+
+            const filtered = allStudents.filter(s => {
+                const haystack = `
+                    ${s.full_name}
+                    ${s.email}
+                    ${s.phone_number}
+                    ${s.emergency_contact_name}
+                    ${s.emergency_contact_number}
+                `.toLowerCase();
+                return haystack.includes(q);
+            });
+
+            renderStudents(filtered);
+        });
+    }
+
     
     
     

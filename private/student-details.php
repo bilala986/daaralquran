@@ -66,6 +66,7 @@ $fullname = $_SESSION['fullname'];
                     <input id="searchInput" type="text" class="form-control" placeholder="Search by name, email or phone...">
                 </div>
 
+
                 <!-- Controls (aligned right, dropdown removed) -->
                 <div class="d-flex gap-2">
                     <button id="refreshBtn" class="btn btn-outline-secondary btn-sm">
