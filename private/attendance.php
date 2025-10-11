@@ -61,13 +61,16 @@ $fullname = $_SESSION['fullname'];
                     <input id="attendanceSearchInput" type="text" class="form-control" placeholder="Search by name...">
                 </div>
 
-                <!-- Refresh + Filter -->
+                <!-- Refresh + Filter + Save -->
                 <div class="d-flex gap-2">
                     <button id="attendanceRefreshBtn" class="btn btn-outline-secondary btn-sm">
                         <i class="bi bi-arrow-clockwise"></i> Refresh
                     </button>
                     <button id="attendanceFilterBtn" class="btn btn-outline-secondary btn-sm">
                         <i class="bi bi-filter"></i> Filter
+                    </button>
+                    <button id="attendanceSaveBtn" class="btn btn-primary btn-sm" disabled>
+                        <i class="bi bi-save"></i> Save
                     </button>
                 </div>
             </div>
