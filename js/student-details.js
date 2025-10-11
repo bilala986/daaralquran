@@ -118,7 +118,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // Refresh button
-    if (refreshBtn) refreshBtn.addEventListener("click", loadStudents);
+    if (refreshBtn) {
+        refreshBtn.addEventListener("click", () => {
+            // clear search
+            if (searchInput) searchInput.value = "";
+
+            // clear modal filters
+            const filterCourse = document.getElementById("filterCourse");
+            const filterClassModal = document.getElementById("filterClassModal");
+            if (filterCourse) filterCourse.value = "";
+            if (filterClassModal) filterClassModal.value = "";
+
+            // reload full list
+            loadStudents();
+        });
+    }
+
 
     // Filter / search actions
     if (filterBtn) filterBtn.addEventListener("click", loadStudents);
