@@ -87,17 +87,24 @@ document.addEventListener("DOMContentLoaded", () => {
         studentsTbody.innerHTML = `<tr><td colspan="8" class="text-muted py-3">Loading...</td></tr>`;
         const students = await fetchStudents();
 
-        // Only search filter now (class filter removed)
+        // ✅ store the full list globally so edit/delete can find students
+        allStudents = students;
+
         const q = searchInput.value.trim().toLowerCase();
+        const courseVal = document.getElementById("filterCourse")?.value || "";
+        const classVal = document.getElementById("filterClassModal")?.value || "";
 
         const filtered = students.filter(s => {
-            if (!q) return true;
-            const hay = `${s.full_name} ${s.email} ${s.phone_number}`.toLowerCase();
-            return hay.includes(q);
+            const matchesSearch = !q || `${s.full_name} ${s.email} ${s.phone_number}`.toLowerCase().includes(q);
+            const matchesCourse = !courseVal || s.course_completed === courseVal;
+            const matchesClass = !classVal || s.class_name === classVal;
+            return matchesSearch && matchesCourse && matchesClass;
         });
 
         renderStudents(filtered);
     }
+
+
 
 
     // Refresh button
@@ -106,18 +113,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // Filter / search actions
     if (filterBtn) filterBtn.addEventListener("click", loadStudents);
     if (filterClass) filterClass.addEventListener("change", loadStudents);
-    if (searchInput) searchInput.addEventListener("input", () => {
-        // local search: render from allStudents to be instant
-        const q = searchInput.value.trim().toLowerCase();
-        const classVal = filterClass.value;
-        const filtered = allStudents.filter(s => {
-            const byClass = classVal ? s.class_name === classVal : true;
-            if (!q) return byClass;
-            const hay = `${s.full_name} ${s.email} ${s.phone_number}`.toLowerCase();
-            return byClass && hay.includes(q);
-        });
-        renderStudents(filtered);
-    });
 
     // Add course "Other" toggle
     if (addCourseDropdown) {
@@ -281,6 +276,39 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+    
+    
+    
+    
+    
+    
+    // Open modal when filter button is clicked
+    document.getElementById("filterBtn").addEventListener("click", () => {
+        const modal = new bootstrap.Modal(document.getElementById("filterModal"));
+        modal.show();
+    });
+
+    // Apply filters
+    document.getElementById("applyFilters").addEventListener("click", () => {
+        loadStudents();
+        const modalEl = document.getElementById("filterModal");
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
+    });
+
+    // ✅ Clear all filters and reload
+    document.getElementById("clearFilters").addEventListener("click", () => {
+        document.getElementById("filterCourse").value = "";
+        document.getElementById("filterClassModal").value = "";
+        loadStudents();
+    });
+
+
+    
+    
+    
+    
+    
 
     // initial load
     loadStudents();

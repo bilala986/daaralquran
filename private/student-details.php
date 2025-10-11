@@ -264,6 +264,54 @@ $fullname = $_SESSION['fullname'];
             </div>
         </div>
     </div>
+    
+    <!-- Filter Modal -->
+    <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterModalLabel">Filter Students</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    <!-- Course Completed Filter -->
+                    <div class="mb-3">
+                        <label class="form-label">Course Completed</label>
+                        <select id="filterCourse" class="form-select">
+                            <option value="">Any</option>
+                            <option value="Tafseer of Juz 30">Tafseer of Juz 30</option>
+                            <option value="Seerah Course">Seerah Course</option>
+                            <option value="40 Hadeeth of Imam Nawawi">40 Hadeeth of Imam Nawawi</option>
+                            <option value="None">None</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Class Filter -->
+                    <div class="mb-3">
+                        <label class="form-label">Class</label>
+                        <select id="filterClassModal" class="form-select">
+                            <option value="">Any</option>
+                            <option value="Thursday Adults">Thursday Adults</option>
+                            <option value="Friday Adults">Friday Adults</option>
+                            <option value="Friday Kids">Friday Kids</option>
+                        </select>
+                    </div>
+
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <button type="button" id="clearFilters" class="btn btn-outline-danger">Clear Filters</button>
+                    <div>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" id="applyFilters" class="btn btn-primary">Apply Filters</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 
     <!-- Toast container (optional) -->
     <div id="toastContainer"></div>
