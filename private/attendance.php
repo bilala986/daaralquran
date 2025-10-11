@@ -110,35 +110,7 @@ $fullname = $_SESSION['fullname'];
         </div>
     </div>
 
-    <!-- Attendance Edit Modal -->
-    <div class="modal fade" id="attendanceModal" tabindex="-1" aria-labelledby="attendanceModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="attendanceModalLabel">Mark Attendance</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body text-center">
-                    <p class="mb-3 fs-5">Mark attendance for:</p>
-                    <h5 id="studentName" class="fw-bold text-primary"></h5>
-
-                    <div class="mb-3">
-                        <label class="form-label">Selected Date</label>
-                        <p class="fw-bold">Date: <span id="selectedAttendanceDate"><?= date('Y-m-d') ?></span></p>
-                    </div>
-
-                    <div id="attendanceCalendar" class="d-flex flex-wrap gap-2 justify-content-center mb-3">
-                        <!-- Dates generated dynamically -->
-                    </div>
-
-                    <div class="d-flex justify-content-center gap-3 mt-4">
-                        <button id="markPresent" class="btn btn-success px-4">Present</button>
-                        <button id="markAbsent" class="btn btn-danger px-4">Absent</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    
 
     <!-- Filter Modal -->
     <div class="modal fade" id="attendanceFilterModal" tabindex="-1" aria-labelledby="attendanceFilterModalLabel" aria-hidden="true">
@@ -150,15 +122,6 @@ $fullname = $_SESSION['fullname'];
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Class</label>
-                        <select id="attendanceFilterClass" class="form-select">
-                            <option value="">Any</option>
-                            <option value="Thursday Adults">Thursday Adults</option>
-                            <option value="Friday Adults">Friday Adults</option>
-                            <option value="Friday Kids">Friday Kids</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
                         <label class="form-label">Status</label>
                         <select id="attendanceFilterStatus" class="form-select">
                             <option value="">Any</option>
@@ -168,7 +131,7 @@ $fullname = $_SESSION['fullname'];
                     </div>
                 </div>
                 <div class="modal-footer d-flex justify-content-between">
-                    <button type="button" id="attendanceClearFilters" class="btn btn-outline-danger">Clear Filters</button>
+                    <button type="button" id="attendanceClearFilters" class="btn btn-outline-danger">Clear Filter</button>
                     <div>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         <button type="button" id="attendanceApplyFilters" class="btn btn-primary">Apply Filters</button>
@@ -177,6 +140,7 @@ $fullname = $_SESSION['fullname'];
             </div>
         </div>
     </div>
+
 
     <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="../js/attendance.js"></script>

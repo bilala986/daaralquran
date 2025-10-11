@@ -6,15 +6,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectedDateEl = document.getElementById("selectedDate");
     const calendarContainer = document.getElementById("calendarContainer");
 
-    // Modal elements
-    const attendanceModalEl = document.getElementById("attendanceModal");
-    const attendanceModal = new bootstrap.Modal(attendanceModalEl);
-    const studentNameEl = document.getElementById("studentName");
-    const selectedAttendanceDateEl = document.getElementById("selectedAttendanceDate");
-    const attendanceCalendar = document.getElementById("attendanceCalendar");
-    const markPresentBtn = document.getElementById("markPresent");
-    const markAbsentBtn = document.getElementById("markAbsent");
-
     // Top controls
     const searchInput = document.getElementById("attendanceSearchInput");
     const refreshBtn = document.getElementById("attendanceRefreshBtn");
@@ -23,7 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // Filter modal elements
     const filterModalEl = document.getElementById("attendanceFilterModal");
     const filterModal = new bootstrap.Modal(filterModalEl);
-    const filterClassSelect = document.getElementById("attendanceFilterClass");
     const filterStatusSelect = document.getElementById("attendanceFilterStatus");
     const applyFiltersBtn = document.getElementById("attendanceApplyFilters");
     const clearFiltersBtn = document.getElementById("attendanceClearFilters");
@@ -138,41 +128,49 @@ document.addEventListener("DOMContentLoaded", () => {
         const dateStr = selectedAttendanceDate.toISOString().split("T")[0];
         const attendanceMap = await fetchAttendanceByClassAndDate(className, dateStr);
 
-        // Filter students by class
+        // Filter students by selected class
         let students = allStudents.filter(s => s.class_name === className);
 
-        // Apply search filter
+        // Apply search filter (student name)
         const q = searchInput?.value.trim().toLowerCase();
         if (q) {
             students = students.filter(s => s.full_name.toLowerCase().includes(q));
         }
 
-        // Apply modal filters
-        const filterClassVal = filterClassSelect?.value;
+        // Apply modal filter: only Status
         const filterStatusVal = filterStatusSelect?.value;
-        if (filterClassVal) students = students.filter(s => s.class_name === filterClassVal);
-        if (filterStatusVal) students = students.filter(s => (attendanceMap[s.id] || "–") === filterStatusVal);
+        if (filterStatusVal) {
+            students = students.filter(s => (attendanceMap[s.id] || "–") === filterStatusVal);
+        }
 
         if (!students.length) {
             attendanceTableBody.innerHTML = `<tr><td colspan="4" class="text-muted py-3">No students found.</td></tr>`;
             return;
         }
 
+        // Render table rows with inline attendance buttons
         attendanceTableBody.innerHTML = students.map((s, i) => {
             const status = attendanceMap[s.id] || "–";
-            let badgeClass = "text-bg-secondary";
-            if (status === "Present") badgeClass = "text-bg-success";
-            if (status === "Absent") badgeClass = "text-bg-danger";
+
+            // Initial button classes
+            const presentClass = status === "Present" ? "btn-success" : "btn-outline-success";
+            const absentClass = status === "Absent" ? "btn-danger" : "btn-outline-danger";
 
             return `
                 <tr data-id="${s.id}">
                     <td>${i + 1}</td>
                     <td>${escapeHtml(s.full_name)}</td>
-                    <td><span class="badge ${badgeClass}">${status}</span></td>
                     <td>
-                        <button class="btn btn-primary btn-sm btn-edit-attendance" data-id="${s.id}">
-                            <i class="bi bi-pencil-square"></i> Edit
-                        </button>
+                        <span class="badge ${status === "Present" ? "text-bg-success" : status === "Absent" ? "text-bg-danger" : "text-bg-secondary"}">
+                            ${status}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="d-flex gap-2 justify-content-center">
+                            <button class="btn btn-sm ${presentClass} btn-attendance-toggle" data-status="Present">Present</button>
+                            <button class="btn btn-sm ${absentClass} btn-attendance-toggle" data-status="Absent">Absent</button>
+                            <button class="btn btn-sm btn-primary btn-save-attendance" disabled>Save</button>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -202,53 +200,67 @@ document.addEventListener("DOMContentLoaded", () => {
         loadAttendance();
     });
 
-    // Delegated click: open modal
-    document.addEventListener("click", (e) => {
-        const el = e.target.closest(".btn-edit-attendance");
-        if (!el) return;
-        selectedStudentId = el.dataset.id;
-        const stu = allStudents.find(s => s.id == selectedStudentId);
-        if (!stu) return;
+    // --- Delegated click handler for inline buttons ---
+    document.addEventListener("click", async (e) => {
+        const toggleBtn = e.target.closest(".btn-attendance-toggle");
+        const saveBtnClicked = e.target.closest(".btn-save-attendance");
 
-        studentNameEl.textContent = stu.full_name;
-        if (!selectedAttendanceDate) selectedAttendanceDate = getNextClassDate(stu.class_name);
-        selectedAttendanceDateEl.textContent = selectedAttendanceDate.toISOString().split("T")[0];
+        // Handle Present/Absent toggle
+        if (toggleBtn) {
+            const row = toggleBtn.closest("tr");
+            const presentBtn = row.querySelector('button[data-status="Present"]');
+            const absentBtn = row.querySelector('button[data-status="Absent"]');
+            const saveBtn = row.querySelector(".btn-save-attendance");
 
-        const weekday = stu.class_name.toLowerCase().includes("friday") ? 5 : 4;
-        renderCalendar(selectedAttendanceDate, weekday, attendanceCalendar, (newDate) => {
-            selectedAttendanceDateEl.textContent = newDate.toISOString().split("T")[0];
-        });
+            if (toggleBtn.dataset.status === "Present") {
+                presentBtn.classList.remove("btn-outline-success");
+                presentBtn.classList.add("btn-success");
+                absentBtn.classList.remove("btn-danger");
+                absentBtn.classList.add("btn-outline-danger");
+            } else {
+                absentBtn.classList.remove("btn-outline-danger");
+                absentBtn.classList.add("btn-danger");
+                presentBtn.classList.remove("btn-success");
+                presentBtn.classList.add("btn-outline-success");
+            }
 
-        attendanceModal.show();
+            saveBtn.disabled = false;
+        }
+
+        // Handle Save button click
+        if (saveBtnClicked) {
+            const row = saveBtnClicked.closest("tr");
+            const studentId = row.dataset.id;
+            const statusBtn = row.querySelector(".btn-attendance-toggle.btn-success, .btn-attendance-toggle.btn-danger");
+            const status = statusBtn.dataset.status;
+            const dateStr = selectedAttendanceDate.toISOString().split("T")[0];
+
+            const formData = new FormData();
+            formData.append("student_id", studentId);
+            formData.append("status", status);
+            formData.append("date", dateStr);
+
+            try {
+                const res = await fetch("../php/mark_attendance.php", { method: "POST", body: formData });
+                const json = await res.json();
+                if (json.status === "success") {
+                    showToast(`Attendance saved for ${status}`, "success");
+                    saveBtnClicked.disabled = true;
+
+                    // Update badge
+                    const badge = row.querySelector("td:nth-child(3) span");
+                    badge.textContent = status;
+                    badge.className = `badge ${status === "Present" ? "text-bg-success" : "text-bg-danger"}`;
+                } else {
+                    showToast(json.message || "Error saving attendance", "danger");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Network error", "danger");
+            }
+        }
     });
 
-    async function markAttendance(status) {
-        if (!selectedStudentId || !selectedAttendanceDate) return;
-        const dateStr = selectedAttendanceDate.toISOString().split("T")[0];
-
-        const formData = new FormData();
-        formData.append("student_id", selectedStudentId);
-        formData.append("status", status);
-        formData.append("date", dateStr);
-
-        try {
-            const res = await fetch("../php/mark_attendance.php", { method: "POST", body: formData });
-            const json = await res.json();
-            if (json.status === "success") {
-                showToast(`Marked ${status}`, "success");
-                attendanceModal.hide();
-                await loadAttendance();
-            } else {
-                showToast(json.message || "Error", "danger");
-            }
-        } catch (err) {
-            console.error("markAttendance:", err);
-            showToast("Network error", "danger");
-        }
-    }
-
-    if (markPresentBtn) markPresentBtn.addEventListener("click", () => markAttendance("Present"));
-    if (markAbsentBtn) markAbsentBtn.addEventListener("click", () => markAttendance("Absent"));
 
     // --- Search & Filter ---
     if (searchInput) {
@@ -258,7 +270,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (refreshBtn) {
         refreshBtn.addEventListener("click", () => {
             searchInput.value = "";
-            filterClassSelect.value = "";
             filterStatusSelect.value = "";
             loadAttendance();
         });
@@ -277,9 +288,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (clearFiltersBtn) {
         clearFiltersBtn.addEventListener("click", () => {
-            filterClassSelect.value = "";
-            filterStatusSelect.value = "";
+            filterStatusSelect.value = ""; // Only reset Status filter
             loadAttendance();
+            filterModal.hide(); // Optional: hide modal after clearing
         });
     }
 
