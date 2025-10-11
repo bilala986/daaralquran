@@ -283,7 +283,7 @@ $fullname = $_SESSION['fullname'];
                             <option value="">Any</option>
                             <option value="Tafseer of Juz 30">Tafseer of Juz 30</option>
                             <option value="Seerah Course">Seerah Course</option>
-                            <option value="40 Hadeeth of Imam Nawawi">40 Hadeeth of Imam Nawawi</option>
+                            <option value="40 Hadeeth of Imam Nawwawi">40 Hadeeth of Imam Nawwawi</option>
                             <option value="None">None</option>
                             <option value="Other">Other</option>
                         </select>

@@ -19,13 +19,11 @@ $fullname = $_SESSION['fullname'];
     <link href="../css/dashboard.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
     <style>
-        /* small helper */
         .selected-date-btn {
             background-color: #0d6efd !important;
             color: #fff !important;
             border-color: #0d6efd !important;
         }
-        /* calendar buttons size */
         #calendarContainer button { min-width: 40px; min-height: 36px; }
     </style>
 </head>
@@ -41,7 +39,7 @@ $fullname = $_SESSION['fullname'];
             </div>
         </div>
     </nav>
-    
+
     <!-- Back Button -->
     <div class="container mt-3">
         <a href="dashboard.php" class="btn btn-outline-primary btn-sm">
@@ -49,15 +47,33 @@ $fullname = $_SESSION['fullname'];
         </a>
     </div>
 
-    <!-- Page content -->
+    <!-- Page Title + Controls -->
     <div class="container-fluid mt-4">
         <div class="card p-3 shadow-sm">
-            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-                <h5 class="text-primary mb-2 mb-md-0">Attendance</h5>
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 top-controls">
+                <h3 class="fw-semibold text-primary mb-2 mb-md-0">Attendance</h3>
+
+                <!-- Search bar -->
+                <div class="input-group" style="max-width: 300px;">
+                    <span class="input-group-text bg-white">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input id="attendanceSearchInput" type="text" class="form-control" placeholder="Search by name...">
+                </div>
+
+                <!-- Refresh + Filter -->
+                <div class="d-flex gap-2">
+                    <button id="attendanceRefreshBtn" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                    <button id="attendanceFilterBtn" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-filter"></i> Filter
+                    </button>
+                </div>
             </div>
 
+            <!-- Class & Calendar -->
             <div class="row mb-3 align-items-center">
-                <!-- Class dropdown (left) -->
                 <div class="col-12 col-md-4 d-flex justify-content-start">
                     <select id="attendanceClassSelect" class="form-select form-select-sm w-auto">
                         <option value="Thursday Adults">Thursday Adults</option>
@@ -65,19 +81,14 @@ $fullname = $_SESSION['fullname'];
                         <option value="Friday Kids">Friday Kids</option>
                     </select>
                 </div>
-
-                <!-- Button centered -->
                 <div class="col-12 col-md-4 d-flex justify-content-center align-items-center">
                     <button id="nextClassBtn" class="btn btn-outline-primary btn-sm">Calendar</button>
                 </div>
-
-                <!-- Selected date (right) -->
                 <div class="col-12 col-md-4 d-flex justify-content-end align-items-center">
                     <span id="selectedDate" class="fw-bold text-primary"></span>
                 </div>
             </div>
 
-            <!-- Calendar container -->
             <div id="calendarContainer" class="mt-2 d-flex flex-wrap justify-content-center gap-1" style="display:none;"></div>
 
             <!-- Attendance Table -->
@@ -107,23 +118,19 @@ $fullname = $_SESSION['fullname'];
                     <h5 class="modal-title" id="attendanceModalLabel">Mark Attendance</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-
                 <div class="modal-body text-center">
                     <p class="mb-3 fs-5">Mark attendance for:</p>
                     <h5 id="studentName" class="fw-bold text-primary"></h5>
 
-                    <!-- Selected Date -->
                     <div class="mb-3">
                         <label class="form-label">Selected Date</label>
                         <p class="fw-bold">Date: <span id="selectedAttendanceDate"><?= date('Y-m-d') ?></span></p>
                     </div>
 
-                    <!-- Custom Calendar Container (small) -->
                     <div id="attendanceCalendar" class="d-flex flex-wrap gap-2 justify-content-center mb-3">
                         <!-- Dates generated dynamically -->
                     </div>
 
-                    <!-- Present/Absent Buttons -->
                     <div class="d-flex justify-content-center gap-3 mt-4">
                         <button id="markPresent" class="btn btn-success px-4">Present</button>
                         <button id="markAbsent" class="btn btn-danger px-4">Absent</button>
@@ -133,7 +140,44 @@ $fullname = $_SESSION['fullname'];
         </div>
     </div>
 
-    <!-- Bootstrap + JS -->
+    <!-- Filter Modal -->
+    <div class="modal fade" id="attendanceFilterModal" tabindex="-1" aria-labelledby="attendanceFilterModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="attendanceFilterModalLabel">Filter Attendance</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Class</label>
+                        <select id="attendanceFilterClass" class="form-select">
+                            <option value="">Any</option>
+                            <option value="Thursday Adults">Thursday Adults</option>
+                            <option value="Friday Adults">Friday Adults</option>
+                            <option value="Friday Kids">Friday Kids</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select id="attendanceFilterStatus" class="form-select">
+                            <option value="">Any</option>
+                            <option value="Present">Present</option>
+                            <option value="Absent">Absent</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <button type="button" id="attendanceClearFilters" class="btn btn-outline-danger">Clear Filters</button>
+                    <div>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" id="attendanceApplyFilters" class="btn btn-primary">Apply Filters</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="../js/attendance.js"></script>
 </body>
