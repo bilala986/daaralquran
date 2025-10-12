@@ -49,18 +49,26 @@ document.addEventListener("DOMContentLoaded", () => {
             btn.addEventListener("click", () => {
                 selectedMonth = idx;
                 selectedMonthText.textContent = name;
+
+                // Deselect all buttons
                 monthContainer.querySelectorAll("button").forEach(b => {
                     b.classList.remove("selected-month-btn");
                     b.classList.add("btn-outline-primary");
                 });
                 btn.classList.remove("btn-outline-primary");
                 btn.classList.add("selected-month-btn");
+
+                // Reset filter when changing month
+                statusFilter = "";
+                feesStatusFilter.value = "";
+
                 loadFees();
             });
 
             monthContainer.appendChild(btn);
         });
     }
+
 
     // --- Fetch fees data ---
     async function fetchFees(className, month) {
