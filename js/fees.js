@@ -1,55 +1,232 @@
-// ----------------------------
-// 💰 Fees Table
-// ----------------------------
+document.addEventListener("DOMContentLoaded", () => {
+    // Elements
+    const feesTableBody = document.getElementById("feesTableBody");
+    const classSelect = document.getElementById("feesClassSelect");
+    const monthContainer = document.getElementById("feesMonthContainer");
+    const selectedMonthText = document.getElementById("selectedMonthText");
+    const searchInput = document.getElementById("feesSearchInput");
+    const refreshBtn = document.getElementById("feesRefreshBtn");
+    const saveBtn = document.getElementById("feesSaveBtn");
+    let statusFilter = ""; // "" = all, "Paid" | "Unpaid" | "Pending"
 
-// Elements
-const prevMonthBtn = document.getElementById("prevMonth");
-const nextMonthBtn = document.getElementById("nextMonth");
-const feesMonthInput = document.getElementById("feesMonth");
-const feesTableBody = document.getElementById("feesTableBody");
+    const feesFilterBtn = document.getElementById("feesFilterBtn");
+    const feesStatusFilter = document.getElementById("feesStatusFilter");
+    const applyFeesFilter = document.getElementById("applyFeesFilter");
 
-// Change Month
-function changeMonth(direction) {
-    if (!feesMonthInput) return;
-    const [year, month] = feesMonthInput.value.split("-").map(Number);
-    const date = new Date(year, month - 1);
-    date.setMonth(date.getMonth() + (direction === "next" ? 1 : -1));
-    feesMonthInput.value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-    loadFees();
-}
+    // Apply filter
+    applyFeesFilter.addEventListener("click", () => {
+        statusFilter = feesStatusFilter.value;
+        loadFees();
+    });
 
-if (prevMonthBtn) prevMonthBtn.addEventListener("click", () => changeMonth("prev"));
-if (nextMonthBtn) nextMonthBtn.addEventListener("click", () => changeMonth("next"));
 
-// Load Fees Table
-async function loadFees() {
-    if (!feesTableBody) return;
-    feesTableBody.innerHTML = `<tr><td colspan="5" class="text-muted">Loading...</td></tr>`;
+    let allStudents = [];
+    let selectedMonth = null;
+    let pendingChanges = {}; // { studentId: "Paid" | "Unpaid" }
 
-    const students = await fetchStudents();
-    if (!students.length) {
-        feesTableBody.innerHTML = `<tr><td colspan="5" class="text-muted">No students found.</td></tr>`;
-        return;
+    const monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+
+    // Fixed class fees
+    const classFees = {
+        "Thursday Adults": 25,
+        "Friday Kids": 25,
+        "Friday Adults": 15
+    };
+
+    // --- Render month buttons ---
+    function renderMonthButtons() {
+        monthContainer.innerHTML = "";
+        const now = new Date();
+        const currentMonth = now.getMonth();
+
+        monthNames.forEach((name, idx) => {
+            const btn = document.createElement("button");
+            btn.textContent = name;
+            btn.className = "btn btn-sm btn-outline-primary month-btn";
+            if (idx === currentMonth) {
+                btn.classList.remove("btn-outline-primary");
+                btn.classList.add("selected-month-btn");
+                selectedMonth = idx;
+                selectedMonthText.textContent = name;
+            }
+
+            btn.addEventListener("click", () => {
+                selectedMonth = idx;
+                selectedMonthText.textContent = name;
+                monthContainer.querySelectorAll("button").forEach(b => {
+                    b.classList.remove("selected-month-btn");
+                    b.classList.add("btn-outline-primary");
+                });
+                btn.classList.remove("btn-outline-primary");
+                btn.classList.add("selected-month-btn");
+                loadFees();
+            });
+
+            monthContainer.appendChild(btn);
+        });
     }
 
-    const currentMonth = feesMonthInput ? feesMonthInput.value : new Date().toISOString().slice(0, 7);
+    // --- Fetch fees data ---
+    async function fetchFees(className, month) {
+        try {
+            const url = `../php/get_fees.php?class_name=${encodeURIComponent(className)}&month=${month+1}`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error("Server error");
+            return await res.json();
+        } catch (err) {
+            console.error("fetchFees:", err);
+            return {};
+        }
+    }
 
-    feesTableBody.innerHTML = students
-        .map((student, index) => `
-            <tr data-student-id="${student.id}" data-month="${currentMonth}">
-                <td>${index + 1}</td>
-                <td>${student.full_name}</td>
-                <td><span class="badge text-bg-secondary">–</span></td>
-                <td><span class="badge text-bg-secondary">Pending</span></td>
-                <td>
-                    <button class="btn btn-primary btn-sm" disabled>
-                        <i class="bi bi-pencil-square"></i> Edit
-                    </button>
-                </td>
-            </tr>
-        `)
-        .join("");
-}
+    // --- Render fees table ---
+    async function loadFees() {
+        if (!feesTableBody) return;
+        feesTableBody.innerHTML = `<tr><td colspan="5" class="text-muted py-3">Loading...</td></tr>`;
+        pendingChanges = {};
+        saveBtn.disabled = true;
 
-// Init
-document.addEventListener("DOMContentLoaded", loadFees);
+        allStudents = await fetchStudents();
+        const className = classSelect.value;
+        if (selectedMonth === null) selectedMonth = new Date().getMonth();
+
+        const feesMap = await fetchFees(className, selectedMonth);
+
+        let students = allStudents.filter(s => s.class_name === className);
+
+        // Search filter
+        const q = searchInput.value.trim().toLowerCase();
+        if (q) students = students.filter(s => s.full_name.toLowerCase().includes(q));
+
+        if (!students.length) {
+            feesTableBody.innerHTML = `<tr><td colspan="5" class="text-muted py-3">No students found.</td></tr>`;
+            return;
+        }
+        
+        if (statusFilter) {
+            students = students.filter(s => {
+                const currentStatus = feesMap[s.id] || "Pending";
+                return currentStatus === statusFilter;
+            });
+        }
+
+
+        const defaultFee = classFees[className] || 0;
+
+        feesTableBody.innerHTML = students.map((s, i) => {
+            // Default to Pending if no record exists
+            let status = feesMap[s.id] || "Pending";
+            let badgeClass = "text-bg-secondary"; // grey for Pending
+            if (status === "Paid") badgeClass = "text-bg-success";
+            else if (status === "Unpaid") badgeClass = "text-bg-danger";
+
+            return `
+                <tr data-id="${s.id}">
+                    <td>${i + 1}</td>
+                    <td>${s.full_name}</td>
+                    <td class="fw-semibold">£${defaultFee}</td>
+                    <td>
+                        <span class="badge ${badgeClass}">${status}</span>
+                    </td>
+                    <td>
+                        <div class="d-flex gap-2 justify-content-center">
+                            <button class="btn btn-sm btn-outline-success btn-fees-toggle" data-status="Paid">Paid</button>
+                            <button class="btn btn-sm btn-outline-danger btn-fees-toggle" data-status="Unpaid">Unpaid</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join("");
+    }
+
+    // --- Toggle Paid/Unpaid ---
+    document.addEventListener("click", (e) => {
+        const btn = e.target.closest(".btn-fees-toggle");
+        if (!btn) return;
+
+        const row = btn.closest("tr");
+        const studentId = row.dataset.id;
+
+        // Keep the status badge unchanged (still Pending)
+        // Update button styles to show selection
+        const paidBtn = row.querySelector('button[data-status="Paid"]');
+        const unpaidBtn = row.querySelector('button[data-status="Unpaid"]');
+
+        if (btn.dataset.status === "Paid") {
+            paidBtn.classList.remove("btn-outline-success");
+            paidBtn.classList.add("btn-success");
+            unpaidBtn.classList.remove("btn-danger");
+            unpaidBtn.classList.add("btn-outline-danger");
+            pendingChanges[studentId] = { status: "Paid" };
+        } else {
+            unpaidBtn.classList.remove("btn-outline-danger");
+            unpaidBtn.classList.add("btn-danger");
+            paidBtn.classList.remove("btn-success");
+            paidBtn.classList.add("btn-outline-success");
+            pendingChanges[studentId] = { status: "Unpaid" };
+        }
+
+        // Enable Save button
+        saveBtn.disabled = false;
+    });
+
+
+    // --- Save changes ---
+    saveBtn.addEventListener("click", async () => {
+        const entries = Object.entries(pendingChanges);
+        if (!entries.length) return;
+
+        try {
+            for (const [studentId, data] of entries) {
+                const formData = new FormData();
+                formData.append("student_id", studentId);
+                formData.append("status", data.status);
+                formData.append("amount", data.amount);
+                formData.append("month", selectedMonth+1);
+
+                const res = await fetch("../php/mark_fees.php", { method: "POST", body: formData });
+                const json = await res.json();
+                if (json.status !== "success") {
+                    showToast(`Failed to save ${studentId}`, "danger");
+                }
+            }
+            showToast("All changes saved!", "success");
+            pendingChanges = {};
+            saveBtn.disabled = true;
+            loadFees();
+        } catch (err) {
+            console.error(err);
+            showToast("Network error", "danger");
+        }
+    });
+
+    // --- Search and refresh ---
+    searchInput.addEventListener("input", loadFees);
+    refreshBtn.addEventListener("click", () => {
+        searchInput.value = "";
+        loadFees();
+    });
+
+    function showToast(msg, type="success") {
+        const div = document.createElement("div");
+        div.className = "position-fixed bottom-0 end-0 p-3";
+        div.innerHTML = `
+            <div class="toast align-items-center text-bg-${type} border-0 show" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">${msg}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>`;
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 3200);
+    }
+
+    // --- Init ---
+    renderMonthButtons();
+    loadFees();
+
+    classSelect.addEventListener("change", loadFees);
+});
