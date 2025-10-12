@@ -7,19 +7,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchInput = document.getElementById("feesSearchInput");
     const refreshBtn = document.getElementById("feesRefreshBtn");
     const saveBtn = document.getElementById("feesSaveBtn");
-    let statusFilter = ""; // "" = all, "Paid" | "Unpaid" | "Pending"
 
+    // Filter modal elements
     const feesFilterBtn = document.getElementById("feesFilterBtn");
     const feesStatusFilter = document.getElementById("feesStatusFilter");
-    const applyFeesFilter = document.getElementById("applyFeesFilter");
+    const feesApplyFilters = document.getElementById("applyFeesFilter");
+    const feesClearFilters = document.getElementById("clearFeesFilter");
 
-    // Apply filter
-    applyFeesFilter.addEventListener("click", () => {
-        statusFilter = feesStatusFilter.value;
-        loadFees();
-    });
-
-
+    let statusFilter = ""; // "" = all, "Paid" | "Unpaid" | "Pending"
     let allStudents = [];
     let selectedMonth = null;
     let pendingChanges = {}; // { studentId: "Paid" | "Unpaid" }
@@ -29,7 +24,6 @@ document.addEventListener("DOMContentLoaded", () => {
         "July", "August", "September", "October", "November", "December"
     ];
 
-    // Fixed class fees
     const classFees = {
         "Thursday Adults": 25,
         "Friday Kids": 25,
@@ -47,7 +41,6 @@ document.addEventListener("DOMContentLoaded", () => {
             btn.textContent = name;
             btn.className = "btn btn-sm btn-outline-primary month-btn";
             if (idx === currentMonth) {
-                btn.classList.remove("btn-outline-primary");
                 btn.classList.add("selected-month-btn");
                 selectedMonth = idx;
                 selectedMonthText.textContent = name;
@@ -101,11 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const q = searchInput.value.trim().toLowerCase();
         if (q) students = students.filter(s => s.full_name.toLowerCase().includes(q));
 
-        if (!students.length) {
-            feesTableBody.innerHTML = `<tr><td colspan="5" class="text-muted py-3">No students found.</td></tr>`;
-            return;
-        }
-        
+        // Status filter
         if (statusFilter) {
             students = students.filter(s => {
                 const currentStatus = feesMap[s.id] || "Pending";
@@ -113,12 +102,15 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
 
+        if (!students.length) {
+            feesTableBody.innerHTML = `<tr><td colspan="5" class="text-muted py-3">No students found.</td></tr>`;
+            return;
+        }
 
         const defaultFee = classFees[className] || 0;
 
         feesTableBody.innerHTML = students.map((s, i) => {
-            // Default to Pending if no record exists
-            let status = feesMap[s.id] || "Pending";
+            const status = feesMap[s.id] || "Pending";
             let badgeClass = "text-bg-secondary"; // grey for Pending
             if (status === "Paid") badgeClass = "text-bg-success";
             else if (status === "Unpaid") badgeClass = "text-bg-danger";
@@ -142,16 +134,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }).join("");
     }
 
-    // --- Toggle Paid/Unpaid ---
+    // --- Toggle Paid/Unpaid selection ---
     document.addEventListener("click", (e) => {
         const btn = e.target.closest(".btn-fees-toggle");
         if (!btn) return;
 
         const row = btn.closest("tr");
         const studentId = row.dataset.id;
-
-        // Keep the status badge unchanged (still Pending)
-        // Update button styles to show selection
         const paidBtn = row.querySelector('button[data-status="Paid"]');
         const unpaidBtn = row.querySelector('button[data-status="Unpaid"]');
 
@@ -169,10 +158,8 @@ document.addEventListener("DOMContentLoaded", () => {
             pendingChanges[studentId] = { status: "Unpaid" };
         }
 
-        // Enable Save button
         saveBtn.disabled = false;
     });
-
 
     // --- Save changes ---
     saveBtn.addEventListener("click", async () => {
@@ -181,11 +168,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
             for (const [studentId, data] of entries) {
+                const row = document.querySelector(`tr[data-id="${studentId}"]`);
+                const amount = row.querySelector(".fw-semibold").textContent.replace("£", "");
+
                 const formData = new FormData();
                 formData.append("student_id", studentId);
                 formData.append("status", data.status);
-                formData.append("amount", data.amount);
-                formData.append("month", selectedMonth+1);
+                formData.append("amount", amount);
+                formData.append("month", selectedMonth + 1);
 
                 const res = await fetch("../php/mark_fees.php", { method: "POST", body: formData });
                 const json = await res.json();
@@ -210,7 +200,28 @@ document.addEventListener("DOMContentLoaded", () => {
         loadFees();
     });
 
-    function showToast(msg, type="success") {
+    // --- Filter modal ---
+    const feesModal = new bootstrap.Modal(document.getElementById("feesFilterModal"));
+
+    feesFilterBtn.addEventListener("click", () => {
+        feesModal.show();
+    });
+
+    feesApplyFilters.addEventListener("click", () => {
+        statusFilter = feesStatusFilter.value;
+        loadFees();
+        feesModal.hide();
+    });
+
+    feesClearFilters.addEventListener("click", () => {
+        statusFilter = "";
+        feesStatusFilter.value = "";
+        loadFees();
+        feesModal.hide();
+    });
+
+    // --- Toast helper ---
+    function showToast(msg, type = "success") {
         const div = document.createElement("div");
         div.className = "position-fixed bottom-0 end-0 p-3";
         div.innerHTML = `
@@ -227,6 +238,5 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- Init ---
     renderMonthButtons();
     loadFees();
-
     classSelect.addEventListener("change", loadFees);
 });

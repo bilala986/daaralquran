@@ -118,7 +118,7 @@ $fullname = $_SESSION['fullname'];
     
     
     
-    <!-- Filter Modal -->
+    <!-- Fees Filter Modal -->
     <div class="modal fade" id="feesFilterModal" tabindex="-1" aria-labelledby="feesFilterModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -127,19 +127,27 @@ $fullname = $_SESSION['fullname'];
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <select id="feesStatusFilter" class="form-select">
-                        <option value="" selected>All</option>
-                        <option value="Paid">Paid</option>
-                        <option value="Unpaid">Unpaid</option>
-                        <option value="Pending">Pending</option>
-                    </select>
+                    <div class="mb-3">
+                        <label for="feesStatusFilter" class="form-label">Status</label>
+                        <select id="feesStatusFilter" class="form-select">
+                            <option value="" selected>All</option>
+                            <option value="Paid">Paid</option>
+                            <option value="Unpaid">Unpaid</option>
+                            <option value="Pending">Pending</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" id="applyFeesFilter" class="btn btn-primary" data-bs-dismiss="modal">Apply</button>
+                <div class="modal-footer d-flex justify-content-between">
+                    <button type="button" id="clearFeesFilter" class="btn btn-outline-danger">Clear Filter</button>
+                    <div>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" id="applyFeesFilter" class="btn btn-primary">Apply Filter</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
     
     
 
