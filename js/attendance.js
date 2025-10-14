@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Filter modal elements
     const filterModalEl = document.getElementById("attendanceFilterModal");
-    const filterModal = new bootstrap.Modal(filterModalEl);
+    const filterModal = filterModalEl ? new bootstrap.Modal(filterModalEl) : null;
     const filterStatusSelect = document.getElementById("attendanceFilterStatus");
     const applyFiltersBtn = document.getElementById("attendanceApplyFilters");
     const clearFiltersBtn = document.getElementById("attendanceClearFilters");
@@ -26,7 +26,19 @@ document.addEventListener("DOMContentLoaded", () => {
     // Track pending changes: { studentId: "Present" | "Absent" }
     let pendingChanges = {};
 
-    // --- Helper functions ---
+    // --- Helpers ---
+    function pad(n) { return String(n).padStart(2, "0"); }
+
+    // returns "YYYY-MM-DD" (safe, no timezone conversion)
+    function toISODateLocal(d) {
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    }
+
+    // returns "DD/MM/YYYY" for display
+    function toDisplayDate(d) {
+        return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+    }
+
     async function fetchStudents() {
         try {
             const res = await fetch("../php/get_students.php");
@@ -73,51 +85,144 @@ document.addEventListener("DOMContentLoaded", () => {
         return new Date(today.getFullYear(), today.getMonth(), today.getDate() + dayDiff);
     }
 
-    // --- Render functions ---
+    // --- Calendar renderer (grid) with month header + formatted date ---
     function renderCalendar(date, allowedWeekday, container = calendarContainer, onSelect) {
         if (!container) return;
         container.innerHTML = "";
 
         const year = date.getFullYear();
         const month = date.getMonth();
+        const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
         const lastDay = new Date(year, month + 1, 0).getDate();
+
+        // === Month Header ===
+        const monthNames = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        ];
+
+        const headerBar = document.createElement("div");
+        headerBar.className = "d-flex justify-content-center align-items-center mb-2";
+        headerBar.style.gap = "10px";
+        headerBar.style.fontWeight = "600";
+        headerBar.style.fontSize = "16px";
+        headerBar.textContent = `${monthNames[month]} ${year}`;
+        container.appendChild(headerBar);
+
+        // === Weekday labels (Mon-Sun) ===
+        const header = document.createElement("div");
+        header.className = "d-flex justify-content-center mb-2";
+        header.style.gap = "6px";
+        const weekdayLabels = ["M", "T", "W", "T", "F", "S", "S"];
+        weekdayLabels.forEach(lbl => {
+            const h = document.createElement("div");
+            h.textContent = lbl;
+            h.style.width = "42px";
+            h.style.textAlign = "center";
+            h.style.fontWeight = "600";
+            header.appendChild(h);
+        });
+        container.appendChild(header);
+
+        // === Grid ===
+        const grid = document.createElement("div");
+        grid.style.display = "grid";
+        grid.style.gridTemplateColumns = "repeat(7, 42px)";
+        grid.style.gridAutoRows = "42px";
+        grid.style.justifyContent = "center";
+        grid.style.gap = "6px";
+        grid.style.padding = "6px";
+        grid.style.background = "transparent";
+
+        // Offset for Monday-first
+        const offset = (firstDay === 0 ? 6 : firstDay - 1);
+        for (let i = 0; i < offset; i++) {
+            const empty = document.createElement("div");
+            empty.className = "calendar-empty";
+            grid.appendChild(empty);
+        }
 
         for (let d = 1; d <= lastDay; d++) {
             const current = new Date(year, month, d);
-            const btn = document.createElement("button");
-            btn.className = "btn btn-sm rounded";
-            btn.textContent = d;
+            const dayCell = document.createElement("div");
+            dayCell.className = "day-cell d-flex align-items-center justify-content-center";
+            dayCell.textContent = d;
+            dayCell.style.width = "42px";
+            dayCell.style.height = "42px";
+            dayCell.style.background = "#fff";
+            dayCell.style.border = "1px solid #ddd";
+            dayCell.style.borderRadius = "6px";
+            dayCell.style.cursor = "default";
+            dayCell.style.userSelect = "none";
 
             if (current.getDay() !== allowedWeekday) {
-                btn.disabled = true;
-                btn.classList.add("btn-secondary");
+                dayCell.style.opacity = "0.45";
+                dayCell.style.cursor = "not-allowed";
             } else {
-                btn.classList.add("btn-outline-primary");
-                const curIso = current.toISOString().split("T")[0];
-                const selIso = selectedAttendanceDate ? selectedAttendanceDate.toISOString().split("T")[0] : null;
-                if (selIso && curIso === selIso) {
-                    btn.classList.remove("btn-outline-primary");
-                    btn.classList.add("selected-date-btn");
-                }
-
-                btn.addEventListener("click", () => {
+                dayCell.style.cursor = "pointer";
+                dayCell.addEventListener("click", () => {
                     selectedAttendanceDate = new Date(year, month, d);
-                    selectedDateEl.textContent = selectedAttendanceDate.toISOString().split("T")[0];
+
+                    // Format as "17th September 2025"
+                    selectedDateEl.textContent = formatHumanDate(selectedAttendanceDate);
+
                     if (onSelect) onSelect(selectedAttendanceDate);
 
-                    container.querySelectorAll("button").forEach(b => {
-                        b.classList.remove("selected-date-btn");
-                        if (!b.disabled) b.classList.add("btn-outline-primary");
+                    container.querySelectorAll(".day-cell").forEach(c => {
+                        c.style.border = "1px solid #ddd";
+                        c.style.boxShadow = "none";
                     });
-                    btn.classList.remove("btn-outline-primary");
-                    btn.classList.add("selected-date-btn");
+                    dayCell.style.border = "2px solid #0d6efd";
+                    dayCell.style.boxShadow = "0 0 0 3px rgba(13,110,253,0.06)";
 
                     loadAttendance();
                 });
             }
-            container.appendChild(btn);
+
+            if (
+                selectedAttendanceDate &&
+                selectedAttendanceDate.getFullYear() === year &&
+                selectedAttendanceDate.getMonth() === month &&
+                selectedAttendanceDate.getDate() === d
+            ) {
+                dayCell.style.border = "2px solid #0d6efd";
+                dayCell.style.boxShadow = "0 0 0 3px rgba(13,110,253,0.06)";
+            }
+
+            grid.appendChild(dayCell);
         }
+
+        container.appendChild(grid);
+
+        // center container
+        container.style.display = "block";
+        container.style.margin = "0 auto";
+        container.style.maxWidth = "336px";
+        container.style.background = "transparent";
     }
+
+    // Helper: 17th September 2025
+    function formatHumanDate(d) {
+        const day = d.getDate();
+        const monthNames = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        ];
+        const year = d.getFullYear();
+
+        const suffix = (n) => {
+            if (n >= 11 && n <= 13) return "th";
+            switch (n % 10) {
+                case 1: return "st";
+                case 2: return "nd";
+                case 3: return "rd";
+                default: return "th";
+            }
+        };
+
+        return `${day}${suffix(day)} ${monthNames[d.getMonth()]} ${year}`;
+    }
+
 
     // --- Main attendance loader ---
     async function loadAttendance() {
@@ -129,8 +234,12 @@ document.addEventListener("DOMContentLoaded", () => {
         await fetchStudents();
         const className = classSelect.value;
         if (!selectedAttendanceDate) selectedAttendanceDate = getNextClassDate(className);
-        const dateStr = selectedAttendanceDate.toISOString().split("T")[0];
-        const attendanceMap = await fetchAttendanceByClassAndDate(className, dateStr);
+
+        // ensure selectedDate element displays correctly
+        selectedDateEl.textContent = toDisplayDate(selectedAttendanceDate);
+
+        const dateStrForApi = toISODateLocal(selectedAttendanceDate); // YYYY-MM-DD
+        const attendanceMap = await fetchAttendanceByClassAndDate(className, dateStrForApi);
 
         // Filter students by class
         let students = allStudents.filter(s => s.class_name === className);
@@ -139,7 +248,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const q = searchInput?.value.trim().toLowerCase();
         if (q) students = students.filter(s => s.full_name.toLowerCase().includes(q));
 
-        // Status filter
+        // Status filter (modal)
         const filterStatusVal = filterStatusSelect?.value;
         if (filterStatusVal) students = students.filter(s => (attendanceMap[s.id] || "–") === filterStatusVal);
 
@@ -175,25 +284,26 @@ document.addEventListener("DOMContentLoaded", () => {
         isCalendarVisible = !isCalendarVisible;
         if (isCalendarVisible) {
             selectedAttendanceDate = getNextClassDate(classSelect.value);
-            selectedDateEl.textContent = selectedAttendanceDate.toISOString().split("T")[0];
+            selectedDateEl.textContent = toDisplayDate(selectedAttendanceDate);
             const weekday = classSelect.value.toLowerCase().includes("friday") ? 5 : 4;
             renderCalendar(selectedAttendanceDate, weekday);
-            calendarContainer.style.display = "flex";
+            calendarContainer.style.display = "block";
         } else {
             calendarContainer.style.display = "none";
         }
     });
 
     classSelect?.addEventListener("change", () => {
+        // When changing class, hide calendar (preserve previous visibility behavior)
         selectedAttendanceDate = getNextClassDate(classSelect.value);
-        selectedDateEl.textContent = selectedAttendanceDate.toISOString().split("T")[0];
+        selectedDateEl.textContent = toDisplayDate(selectedAttendanceDate);
         const weekday = classSelect.value.toLowerCase().includes("friday") ? 5 : 4;
         renderCalendar(selectedAttendanceDate, weekday);
-        calendarContainer.style.display = isCalendarVisible ? "flex" : "none";
+        calendarContainer.style.display = isCalendarVisible ? "block" : "none";
         loadAttendance();
     });
 
-    // --- Delegated click handler for Present/Absent ---
+    // Delegated click handler for Present/Absent
     document.addEventListener("click", (e) => {
         const toggleBtn = e.target.closest(".btn-attendance-toggle");
         if (!toggleBtn) return;
@@ -220,7 +330,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (saveBtn) saveBtn.disabled = false;
     });
 
-    // --- Top Save button ---
+    // Top Save button
     saveBtn?.addEventListener("click", async () => {
         const entries = Object.entries(pendingChanges);
         if (!entries.length) return;
@@ -230,7 +340,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 const formData = new FormData();
                 formData.append("student_id", studentId);
                 formData.append("status", status);
-                formData.append("date", selectedAttendanceDate.toISOString().split("T")[0]);
+
+                // send YYYY-MM-DD (no timezone conversion)
+                formData.append("date", toISODateLocal(selectedAttendanceDate));
 
                 const res = await fetch("../php/mark_attendance.php", { method: "POST", body: formData });
                 const json = await res.json();
@@ -266,22 +378,22 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // --- Search & Filter ---
+    // Search & Filter
     searchInput?.addEventListener("input", loadAttendance);
     refreshBtn?.addEventListener("click", () => {
         searchInput.value = "";
-        filterStatusSelect.value = "";
+        if (filterStatusSelect) filterStatusSelect.value = "";
         loadAttendance();
     });
-    filterBtn?.addEventListener("click", () => filterModal.show());
+    filterBtn?.addEventListener("click", () => filterModal?.show());
     applyFiltersBtn?.addEventListener("click", () => {
         loadAttendance();
-        filterModal.hide();
+        filterModal?.hide();
     });
     clearFiltersBtn?.addEventListener("click", () => {
-        filterStatusSelect.value = "";
+        if (filterStatusSelect) filterStatusSelect.value = "";
         loadAttendance();
-        filterModal.hide();
+        filterModal?.hide();
     });
 
     function showToast(msg, type = "success") {
@@ -298,10 +410,10 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => div.remove(), 3200);
     }
 
-    // --- Init ---
+    // Init
     (async function init() {
         selectedAttendanceDate = getNextClassDate(classSelect.value);
-        selectedDateEl.textContent = selectedAttendanceDate.toISOString().split("T")[0];
+        selectedDateEl.textContent = toDisplayDate(selectedAttendanceDate);
         const weekday = classSelect.value.toLowerCase().includes("friday") ? 5 : 4;
         renderCalendar(selectedAttendanceDate, weekday);
         calendarContainer.style.display = "none";

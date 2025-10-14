@@ -1,13 +1,3 @@
-<?php
-session_start();
-
-if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.html");
-    exit;
-}
-
-$fullname = $_SESSION['fullname'];
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,19 +7,22 @@ $fullname = $_SESSION['fullname'];
     <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet" />
     <link href="../css/dashboard.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400..700&display=swap" rel="stylesheet">
 </head>
 <body class="bg-light">
-
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid px-4">
-            <a class="navbar-brand fw-bold arabic-text" href="dashboard.php">دار القرآن</a>
+            <a class="navbar-brand fw-bold arabic-text" href="dashboard.php" style="font-family: 'Reem Kufi', sans-serif;">دار القرآن</a>
             <div class="d-flex align-items-center ms-auto">
                 <span class="text-white me-3 fw-semibold">Welcome, <?php echo htmlspecialchars($fullname); ?></span>
                 <a href="../php/logout.php" class="btn btn-outline-light btn-sm">Logout</a>
             </div>
         </div>
     </nav>
+
 
     <!-- Main Content -->
     <div class="container py-5">

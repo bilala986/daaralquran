@@ -1,13 +1,3 @@
-<?php
-session_start();
-
-if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.html");
-    exit;
-}
-
-$fullname = $_SESSION['fullname'];
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,6 +7,7 @@ $fullname = $_SESSION['fullname'];
 
     <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet" />
     <link href="../css/dashboard.css" rel="stylesheet" />
+    <link href="../css/attendance.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
     <style>
         .selected-date-btn {
@@ -26,19 +17,22 @@ $fullname = $_SESSION['fullname'];
         }
         #calendarContainer button { min-width: 40px; min-height: 36px; }
     </style>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400..700&display=swap" rel="stylesheet">
 </head>
 <body class="bg-light">
-
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid px-4">
-            <a class="navbar-brand fw-bold arabic-text" href="dashboard.php">دار القرآن</a>
+            <a class="navbar-brand fw-bold arabic-text" href="dashboard.php" style="font-family: 'Reem Kufi', sans-serif;">دار القرآن</a>
             <div class="d-flex align-items-center ms-auto">
                 <span class="text-white me-3 fw-semibold">Welcome, <?php echo htmlspecialchars($fullname); ?></span>
                 <a href="../php/logout.php" class="btn btn-outline-light btn-sm">Logout</a>
             </div>
         </div>
     </nav>
+
 
     <!-- Back Button -->
     <div class="container mt-3">
@@ -53,7 +47,7 @@ $fullname = $_SESSION['fullname'];
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 top-controls">
                 <h3 class="fw-semibold text-primary mb-2 mb-md-0">Attendance</h3>
 
-                <!-- Search bar -->
+                <!-- Left Side: Search -->
                 <div class="input-group" style="max-width: 300px;">
                     <span class="input-group-text bg-white">
                         <i class="bi bi-search"></i>
@@ -61,8 +55,14 @@ $fullname = $_SESSION['fullname'];
                     <input id="attendanceSearchInput" type="text" class="form-control" placeholder="Search by name...">
                 </div>
 
-                <!-- Refresh + Filter + Save -->
-                <div class="d-flex gap-2">
+                <!-- Right Side: Class + Buttons -->
+                <div class="d-flex align-items-center gap-2">
+                    <select id="attendanceClassSelect" class="form-select form-select-sm w-auto">
+                        <option value="Thursday Adults">Thursday Adults</option>
+                        <option value="Friday Adults">Friday Adults</option>
+                        <option value="Friday Kids">Friday Kids</option>
+                    </select>
+
                     <button id="attendanceRefreshBtn" class="btn btn-outline-secondary btn-sm">
                         <i class="bi bi-arrow-clockwise"></i> Refresh
                     </button>
@@ -75,24 +75,18 @@ $fullname = $_SESSION['fullname'];
                 </div>
             </div>
 
-            <!-- Class & Calendar -->
+            <!-- Calendar Controls -->
             <div class="row mb-3 align-items-center">
                 <div class="col-12 col-md-4 d-flex justify-content-start">
-                    <select id="attendanceClassSelect" class="form-select form-select-sm w-auto">
-                        <option value="Thursday Adults">Thursday Adults</option>
-                        <option value="Friday Adults">Friday Adults</option>
-                        <option value="Friday Kids">Friday Kids</option>
-                    </select>
-                </div>
-                <div class="col-12 col-md-4 d-flex justify-content-center align-items-center">
                     <button id="nextClassBtn" class="btn btn-outline-primary btn-sm">Calendar</button>
                 </div>
-                <div class="col-12 col-md-4 d-flex justify-content-end align-items-center">
+                <div class="col-12 col-md-4 d-flex justify-content-center align-items-center">
                     <span id="selectedDate" class="fw-bold text-primary"></span>
                 </div>
             </div>
 
-            <div id="calendarContainer" class="mt-2 d-flex flex-wrap justify-content-center gap-1" style="display:none;"></div>
+            <!-- Updated Calendar Container (no flex classes) -->
+            <div id="calendarContainer" class="mt-2" style="display:none;"></div>
 
             <!-- Attendance Table -->
             <div class="table-responsive mt-3">
@@ -112,6 +106,7 @@ $fullname = $_SESSION['fullname'];
             </div>
         </div>
     </div>
+
 
     
 
