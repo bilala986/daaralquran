@@ -95,21 +95,46 @@ document.addEventListener("DOMContentLoaded", () => {
         const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
         const lastDay = new Date(year, month + 1, 0).getDate();
 
-        // === Month Header ===
         const monthNames = [
             "January", "February", "March", "April", "May", "June",
             "July", "August", "September", "October", "November", "December"
         ];
 
-        const headerBar = document.createElement("div");
-        headerBar.className = "d-flex justify-content-center align-items-center mb-2";
-        headerBar.style.gap = "10px";
-        headerBar.style.fontWeight = "600";
-        headerBar.style.fontSize = "16px";
-        headerBar.textContent = `${monthNames[month]} ${year}`;
-        container.appendChild(headerBar);
+        // === Top bar with Prev / Month Name / Next ===
+        const topBar = document.createElement("div");
+        topBar.className = "d-flex justify-content-center align-items-center mb-2";
+        topBar.style.gap = "10px";
+        topBar.style.fontWeight = "600";
+        topBar.style.fontSize = "16px";
 
-        // === Weekday labels (Mon-Sun) ===
+        // Prev button
+        const prevBtn = document.createElement("span");
+        prevBtn.textContent = "◀";
+        prevBtn.style.cursor = "pointer";
+        prevBtn.addEventListener("click", () => {
+            const newDate = new Date(year, month - 1, 1);
+            renderCalendar(newDate, allowedWeekday, container, onSelect);
+        });
+        topBar.appendChild(prevBtn);
+
+        // Month name
+        const monthLabel = document.createElement("span");
+        monthLabel.textContent = `${monthNames[month]} ${year}`;
+        topBar.appendChild(monthLabel);
+
+        // Next button
+        const nextBtn = document.createElement("span");
+        nextBtn.textContent = "▶";
+        nextBtn.style.cursor = "pointer";
+        nextBtn.addEventListener("click", () => {
+            const newDate = new Date(year, month + 1, 1);
+            renderCalendar(newDate, allowedWeekday, container, onSelect);
+        });
+        topBar.appendChild(nextBtn);
+
+        container.appendChild(topBar);
+
+        // === Weekday labels ===
         const header = document.createElement("div");
         header.className = "d-flex justify-content-center mb-2";
         header.style.gap = "6px";
@@ -134,7 +159,6 @@ document.addEventListener("DOMContentLoaded", () => {
         grid.style.padding = "6px";
         grid.style.background = "transparent";
 
-        // Offset for Monday-first
         const offset = (firstDay === 0 ? 6 : firstDay - 1);
         for (let i = 0; i < offset; i++) {
             const empty = document.createElement("div");
@@ -152,7 +176,6 @@ document.addEventListener("DOMContentLoaded", () => {
             dayCell.style.background = "#fff";
             dayCell.style.border = "1px solid #ddd";
             dayCell.style.borderRadius = "6px";
-            dayCell.style.cursor = "default";
             dayCell.style.userSelect = "none";
 
             if (current.getDay() !== allowedWeekday) {
@@ -162,8 +185,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 dayCell.style.cursor = "pointer";
                 dayCell.addEventListener("click", () => {
                     selectedAttendanceDate = new Date(year, month, d);
-
-                    // Format as "17th September 2025"
                     selectedDateEl.textContent = formatHumanDate(selectedAttendanceDate);
 
                     if (onSelect) onSelect(selectedAttendanceDate);
@@ -194,12 +215,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         container.appendChild(grid);
 
-        // center container
         container.style.display = "block";
         container.style.margin = "0 auto";
         container.style.maxWidth = "336px";
         container.style.background = "transparent";
     }
+
 
     // Helper: 17th September 2025
     function formatHumanDate(d) {
