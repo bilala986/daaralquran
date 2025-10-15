@@ -1,3 +1,9 @@
+<?php
+session_start();
+$fullname = $_SESSION['fullname'] ?? 'User';
+?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -52,9 +58,6 @@
 
                 <!-- Search (reduced width) -->
                 <div class="input-group" style="max-width: 300px;">
-                    <span class="input-group-text bg-white">
-                        <i class="bi bi-search"></i>
-                    </span>
                     <input id="searchInput" type="text" class="form-control" placeholder="Search by name, email or phone...">
                 </div>
 
@@ -62,15 +65,15 @@
                 <!-- Controls (aligned right, dropdown removed) -->
                 <div class="d-flex gap-2">
                     <button id="refreshBtn" class="btn btn-outline-secondary btn-sm">
-                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                        <i class="bi bi-arrow-clockwise"></i>
                     </button>
 
                     <button id="filterBtn" class="btn btn-outline-secondary btn-sm">
-                        <i class="bi bi-filter"></i> Filter
+                        <i class="bi bi-filter"></i>
                     </button>
 
                     <button id="addButton" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addStudentModal">
-                        <i class="bi bi-plus-lg"></i> Add
+                        <i class="bi bi-plus-lg"></i>
                     </button>
                 </div>
             </div>
@@ -81,11 +84,11 @@
                 <table class="table table-hover align-middle text-center" id="studentsTable">
                     <thead class="table-light">
                         <tr>
-                            <th>Email</th>
+                            <th class="d-none d-md-table-cell">Email</th>
                             <th>Full Name</th>
-                            <th>Phone Number</th>
-                            <th>Emergency Contact Name</th>
-                            <th>Emergency Contact Number</th>
+                            <th class="d-none d-md-table-cell">Phone Number</th>
+                            <th class="d-none d-md-table-cell">Emergency Contact Name</th>
+                            <th class="d-none d-md-table-cell">Emergency Contact Number</th>
                             <th>Course Completed</th>
                             <th>Class</th>
                             <th>Actions</th>
@@ -299,6 +302,21 @@
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         <button type="button" id="applyFilters" class="btn btn-primary">Apply Filters</button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Phone modal -->
+    <div class="modal fade" id="studentInfoModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="studentInfoTitle"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="studentInfoBody">
+                    <!-- Filled dynamically -->
                 </div>
             </div>
         </div>

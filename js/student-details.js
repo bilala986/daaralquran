@@ -28,6 +28,11 @@ document.addEventListener("DOMContentLoaded", () => {
     let allStudents = [];
     let studentToDeleteId = null;
 
+    function isMobile() {
+        return window.innerWidth < 768; // Bootstrap md breakpoint
+    }
+
+    
     // Toast helper
     function showToast(message, type = "success") {
         const toast = document.createElement("div");
@@ -53,16 +58,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
         studentsTbody.innerHTML = list.map(student => `
             <tr data-id="${student.id}">
-                <td>${escapeHtml(student.email)}</td>
-                <td>${escapeHtml(student.full_name)}</td>
-                <td>${escapeHtml(student.phone_number)}</td>
-                <td>${escapeHtml(student.emergency_contact_name || "-")}</td>
-                <td>${escapeHtml(student.emergency_contact_number || "-")}</td>
+                <td class="d-none d-md-table-cell">${escapeHtml(student.email)}</td>
+
+                <!-- ✅ Full Name clickable ONLY on mobile -->
+                <td>
+                    <span
+                        class="fw-bold text-primary student-info-trigger"
+                        style="cursor:pointer;"
+                        data-id="${student.id}">
+                        ${escapeHtml(student.full_name)}
+                    </span>
+                </td>
+
+                <!-- ✅ Hide phone number on mobile -->
+                <td class="d-none d-md-table-cell">${escapeHtml(student.phone_number)}</td>
+
+                <td class="d-none d-md-table-cell">${escapeHtml(student.emergency_contact_name || "-")}</td>
+                <td class="d-none d-md-table-cell">${escapeHtml(student.emergency_contact_number || "-")}</td>
                 <td>${escapeHtml(student.course_completed || "-")}</td>
                 <td>${escapeHtml(student.class_name || "-")}</td>
-                <td>
+
+                <!-- ✅ Keep buttons horizontal -->
+                <td class="d-flex justify-content-center flex-nowrap">
                     <button class="btn btn-primary btn-sm me-1 btn-edit-student" data-id="${student.id}">
-                        <i class="bi bi-pencil-square"></i> Edit
+                        <i class="bi bi-pencil-square"></i>
                     </button>
                     <button class="btn btn-sm btn-outline-danger btn-delete-student" data-id="${student.id}">
                         <i class="bi bi-trash"></i>
@@ -71,6 +90,9 @@ document.addEventListener("DOMContentLoaded", () => {
             </tr>
         `).join("");
     }
+
+
+
 
     function escapeHtml(str) {
         if (str === null || str === undefined) return "";
@@ -242,6 +264,41 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
     });
+
+
+
+
+
+    // ✅ Show modal when clicking the full name
+    document.addEventListener("click", (e) => {
+        const trigger = e.target.closest(".student-info-trigger");
+        if (!trigger) return;
+
+        const studentId = trigger.dataset.id;
+        const student = allStudents.find(s => s.id == studentId);
+        if (!student) return;
+
+        // Fill modal content
+        document.getElementById("studentInfoTitle").textContent = student.full_name;
+
+        document.getElementById("studentInfoBody").innerHTML = `
+            <p><strong>Email:</strong> ${escapeHtml(student.email)}</p>
+            <p><strong>Phone:</strong> ${escapeHtml(student.phone_number)}</p>
+            <p><strong>Emergency Contact Name:</strong> ${escapeHtml(student.emergency_contact_name || "-")}</p>
+            <p><strong>Emergency Contact Number:</strong> ${escapeHtml(student.emergency_contact_number || "-")}</p>
+            <p><strong>Course Completed:</strong> ${escapeHtml(student.course_completed || "-")}</p>
+            <p><strong>Class:</strong> ${escapeHtml(student.class_name || "-")}</p>
+        `;
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById("studentInfoModal"));
+        modal.show();
+    });
+
+
+
+
+
 
     // Handle edit submit
     if (editForm) {

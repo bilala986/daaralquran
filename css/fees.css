@@ -1,0 +1,19 @@
+#feesMonthContainer {
+    display: grid !important;
+    grid-template-columns: repeat(3, auto);
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+/* This will actually hide the grid regardless of !important display */
+.hide-months {
+    display: none !important;
+}
+
+.month-btn { min-width: 56px; }
+.selected-month-btn {
+    background-color: #0d6efd !important;
+    color: #fff !important;
+    border-color: #0d6efd !important;
+}
+.top-controls .form-control { min-width: 260px; }

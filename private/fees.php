@@ -16,17 +16,8 @@ if (!isset($_SESSION['fullname'])) {
 
     <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet" />
     <link href="../css/dashboard.css" rel="stylesheet" />
+    <link href="../css/fees.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
-    <style>
-        .month-btn { min-width: 56px; }
-        .selected-month-btn {
-            background-color: #0d6efd !important;
-            color: #fff !important;
-            border-color: #0d6efd !important;
-        }
-        .top-controls .form-control { min-width: 260px; }
-    </style>
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400..700&display=swap" rel="stylesheet">

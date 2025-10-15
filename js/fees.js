@@ -43,8 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
         "Friday Adults": 15
     };
 
-    // --- Ensure month container visible initially ---
-    monthContainer.style.display = "flex";
+    
 
     // --- Render month buttons ---
     function renderMonthButtons() {
@@ -90,8 +89,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- Toggle month buttons visibility ---
     toggleMonthsBtn.addEventListener("click", () => {
-        monthContainer.style.display = monthContainer.style.display === "none" ? "flex" : "none";
+        monthContainer.classList.toggle("hide-months");
     });
+
+
 
     // --- Year navigation ---
     prevYearBtn.addEventListener("click", () => {
