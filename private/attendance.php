@@ -40,23 +40,24 @@
             <i class="bi bi-arrow-left"></i> Back to Dashboard
         </a>
     </div>
+    
+    <!-- Page Title -->
+    <div class="container mt-3">
+        <h3 class="fw-semibold">Attendance</h3>
+    </div>
 
     <!-- Page Title + Controls -->
     <div class="container-fluid mt-4">
         <div class="card p-3 shadow-sm">
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 top-controls">
-                <h3 class="fw-semibold text-primary mb-2 mb-md-0">Attendance</h3>
-
+    
                 <!-- Left Side: Search -->
-                <div class="input-group" style="max-width: 300px;">
-                    <span class="input-group-text bg-white">
-                        <i class="bi bi-search"></i>
-                    </span>
+                <div class="input-group me-3 mb-2" style="max-width: 300px;">
                     <input id="attendanceSearchInput" type="text" class="form-control" placeholder="Search by name...">
                 </div>
 
                 <!-- Right Side: Class + Buttons -->
-                <div class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center gap-2 mb-2">
                     <select id="attendanceClassSelect" class="form-select form-select-sm w-auto">
                         <option value="Thursday Adults">Thursday Adults</option>
                         <option value="Friday Adults">Friday Adults</option>
@@ -64,16 +65,18 @@
                     </select>
 
                     <button id="attendanceRefreshBtn" class="btn btn-outline-secondary btn-sm">
-                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                        <i class="bi bi-arrow-clockwise"></i>
                     </button>
                     <button id="attendanceFilterBtn" class="btn btn-outline-secondary btn-sm">
-                        <i class="bi bi-filter"></i> Filter
+                        <i class="bi bi-filter"></i>
                     </button>
                     <button id="attendanceSaveBtn" class="btn btn-primary btn-sm" disabled>
-                        <i class="bi bi-save"></i> Save
+                        <i class="bi bi-save"></i>
                     </button>
                 </div>
+
             </div>
+
 
             <!-- Calendar Controls -->
             <div class="row mb-3 align-items-center">
@@ -93,7 +96,7 @@
                 <table class="table table-hover align-middle text-center">
                     <thead class="table-light">
                         <tr>
-                            <th>#</th>
+                            <th class="d-none d-sm-table-cell">#</th>
                             <th>Student Name</th>
                             <th>Status</th>
                             <th>Actions</th>

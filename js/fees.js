@@ -14,6 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => div.remove(), 3200);
     }
 
+    // --- DOM Elements ---
     const feesTableBody = document.getElementById("feesTableBody");
     const classSelect = document.getElementById("feesClassSelect");
     const monthContainer = document.getElementById("feesMonthContainer");
@@ -25,6 +26,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchInput = document.getElementById("feesSearchInput");
     const refreshBtn = document.getElementById("feesRefreshBtn");
     const saveBtn = document.getElementById("feesSaveBtn");
+
+    // Filter modal elements
+    const applyFeesFilterBtn = document.getElementById("applyFeesFilter");
+    const clearFeesFilterBtn = document.getElementById("clearFeesFilter");
+    const feesStatusFilterSelect = document.getElementById("feesStatusFilter");
+    const filterModalEl = document.getElementById("feesFilterModal");
 
     let allStudents = [];
     let selectedMonth = null;
@@ -43,8 +50,6 @@ document.addEventListener("DOMContentLoaded", () => {
         "Friday Adults": 15
     };
 
-    
-
     // --- Render month buttons ---
     function renderMonthButtons() {
         monthContainer.innerHTML = "";
@@ -55,8 +60,11 @@ document.addEventListener("DOMContentLoaded", () => {
             btn.textContent = name;
             btn.className = "btn btn-sm btn-outline-primary month-btn";
 
-            // Preselect only if current year and current month, or previously selected month exists for this year
-            if (selectedMonth === null && currentYear === new Date().getFullYear() && idx === new Date().getMonth()) {
+            if (
+                selectedMonth === null &&
+                currentYear === new Date().getFullYear() &&
+                idx === new Date().getMonth()
+            ) {
                 selectedMonth = idx;
                 btn.classList.add("selected-month-btn");
                 selectedMonthText.textContent = name;
@@ -68,7 +76,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 selectedMonth = idx;
                 selectedMonthText.textContent = name;
 
-                // Deselect other buttons
                 monthContainer.querySelectorAll("button").forEach(b => {
                     b.classList.remove("selected-month-btn");
                     b.classList.add("btn-outline-primary");
@@ -76,10 +83,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 btn.classList.remove("btn-outline-primary");
                 btn.classList.add("selected-month-btn");
 
-                // Reset filters and UI changes
                 statusFilter = "";
                 pendingChanges = {};
-
                 loadFees();
             });
 
@@ -89,22 +94,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- Toggle month buttons visibility ---
     toggleMonthsBtn.addEventListener("click", () => {
-        monthContainer.classList.toggle("hide-months");
+        const nowHidden = monthContainer.classList.toggle("d-none");
+        const yearControls = document.getElementById("yearControls");
+        if (yearControls) {
+            yearControls.classList.toggle("d-none");
+        }
+        monthContainer.setAttribute("aria-hidden", nowHidden ? "true" : "false");
     });
-
-
 
     // --- Year navigation ---
     prevYearBtn.addEventListener("click", () => {
         currentYear--;
-        selectedMonth = null; // Reset month selection for new year
+        selectedMonth = null;
         renderMonthButtons();
         loadFees();
     });
 
     nextYearBtn.addEventListener("click", () => {
         currentYear++;
-        selectedMonth = null; // Reset month selection for new year
+        selectedMonth = null;
         renderMonthButtons();
         loadFees();
     });
@@ -122,10 +130,26 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // --- Fetch students (not shown but already in your original flow) ---
+    async function fetchStudents() {
+        try {
+            const res = await fetch("../php/get_students.php");
+            if (!res.ok) throw new Error("Server error");
+            return await res.json();
+        } catch (err) {
+            console.error(err);
+            return [];
+        }
+    }
+
     // --- Render fees table ---
     async function loadFees() {
         if (!feesTableBody) return;
-        feesTableBody.innerHTML = `<tr><td colspan="5" class="text-muted py-3">Loading...</td></tr>`;
+        feesTableBody.innerHTML = `
+        <tr>
+          <td colspan="5" class="d-none d-sm-table-cell text-muted py-3">Loading...</td>
+          <td colspan="4" class="d-sm-none text-muted py-3">Loading...</td>
+        </tr>`;
         pendingChanges = {};
         saveBtn.disabled = true;
 
@@ -137,10 +161,14 @@ document.addEventListener("DOMContentLoaded", () => {
         let students = allStudents.filter(s => s.class_name === className);
 
         const q = searchInput.value.trim().toLowerCase();
-        if (q) students = students.filter(s => s.full_name.toLowerCase().includes(q));
+        if (q) students = students.filter(s =>
+            s.full_name.toLowerCase().includes(q)
+        );
 
         if (statusFilter) {
-            students = students.filter(s => (feesMap[s.id] || "Pending") === statusFilter);
+            students = students.filter(s =>
+                (feesMap[s.id] || "Pending") === statusFilter
+            );
         }
 
         if (!students.length) {
@@ -152,11 +180,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
         feesTableBody.innerHTML = students.map((s, i) => {
             const status = feesMap[s.id] || "Pending";
-            let badgeClass = status === "Paid" ? "text-bg-success" : status === "Unpaid" ? "text-bg-danger" : "text-bg-secondary";
+            const badgeClass =
+                status === "Paid"
+                    ? "text-bg-success"
+                    : status === "Unpaid"
+                        ? "text-bg-danger"
+                        : "text-bg-secondary";
 
             return `
                 <tr data-id="${s.id}">
-                    <td>${i+1}</td>
+                    <td class="d-none d-sm-table-cell">${i + 1}</td>
                     <td>${s.full_name}</td>
                     <td class="fw-semibold">£${defaultFee}</td>
                     <td><span class="badge ${badgeClass}">${status}</span></td>
@@ -206,8 +239,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 formData.append("student_id", studentId);
                 formData.append("status", data.status);
                 formData.append("amount", amount);
-                formData.append("month", selectedMonth + 1); // ✅ month sent as number (1-12)
-                formData.append("year", currentYear);       // ✅ year correctly added
+                formData.append("month", selectedMonth + 1);
+                formData.append("year", currentYear);
 
                 const res = await fetch("../php/mark_fees.php", {
                     method: "POST",
@@ -228,10 +261,32 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // --- Filter modal events ---
+    if (applyFeesFilterBtn) {
+        applyFeesFilterBtn.addEventListener("click", () => {
+            statusFilter = feesStatusFilterSelect.value;
+            loadFees();
+            const modal = bootstrap.Modal.getInstance(filterModalEl);
+            if (modal) modal.hide();
+        });
+    }
+
+    if (clearFeesFilterBtn) {
+        clearFeesFilterBtn.addEventListener("click", () => {
+            statusFilter = "";
+            feesStatusFilterSelect.value = "";
+            loadFees();
+            const modal = bootstrap.Modal.getInstance(filterModalEl);
+            if (modal) modal.hide();
+        });
+    }
 
     // --- Search / Refresh ---
     searchInput.addEventListener("input", loadFees);
-    refreshBtn.addEventListener("click", () => { searchInput.value=""; loadFees(); });
+    refreshBtn.addEventListener("click", () => {
+        searchInput.value="";
+        loadFees();
+    });
 
     // --- Init ---
     renderMonthButtons();

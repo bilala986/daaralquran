@@ -248,7 +248,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- Main attendance loader ---
     async function loadAttendance() {
         if (!attendanceTableBody) return;
-        attendanceTableBody.innerHTML = `<tr><td colspan="4" class="text-muted py-3">Loading...</td></tr>`;
+        attendanceTableBody.innerHTML = `
+        <tr>
+          <td colspan="4" class="d-none d-sm-table-cell text-muted py-3">Loading...</td>
+          <td colspan="3" class="d-sm-none text-muted py-3">Loading...</td>
+        </tr>`;
         pendingChanges = {};
         if (saveBtn) saveBtn.disabled = true;
 
@@ -282,12 +286,16 @@ document.addEventListener("DOMContentLoaded", () => {
             const status = attendanceMap[s.id] || "–";
             return `
                 <tr data-id="${s.id}">
-                    <td>${i + 1}</td>
+                    <td class="d-none d-sm-table-cell">${i + 1}</td>
                     <td>${escapeHtml(s.full_name)}</td>
                     <td>
-                        <span class="badge ${status === "Present" ? "text-bg-success" : status === "Absent" ? "text-bg-danger" : "text-bg-secondary"}">
-                            ${status}
-                        </span>
+                        <span class="badge ${
+                            status === "Present"
+                                ? "text-bg-success"
+                                : status === "Absent"
+                                ? "text-bg-danger"
+                                : "text-bg-secondary"
+                        }">${status}</span>
                     </td>
                     <td>
                         <div class="d-flex gap-2 justify-content-center">
@@ -298,6 +306,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 </tr>
             `;
         }).join("");
+
     }
 
     // --- Event handlers ---

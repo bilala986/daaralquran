@@ -1,5 +1,5 @@
 #feesMonthContainer {
-    display: grid !important;
+    display: grid;
     grid-template-columns: repeat(3, auto);
     gap: 0.5rem;
     justify-content: center;
