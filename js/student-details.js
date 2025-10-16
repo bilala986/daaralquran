@@ -32,7 +32,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return window.innerWidth < 768; // Bootstrap md breakpoint
     }
 
-    
     // Toast helper
     function showToast(message, type = "success") {
         const toast = document.createElement("div");
@@ -49,51 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => toast.remove(), 3500);
     }
 
-    // Render students (with optional local search + filter)
-    function renderStudents(list) {
-        if (!list || !list.length) {
-            studentsTbody.innerHTML = `<tr><td colspan="8" class="text-muted py-3">No students found.</td></tr>`;
-            return;
-        }
-
-        studentsTbody.innerHTML = list.map(student => `
-            <tr data-id="${student.id}">
-                <td class="d-none d-md-table-cell">${escapeHtml(student.email)}</td>
-
-                <!-- ✅ Full Name clickable ONLY on mobile -->
-                <td>
-                    <span
-                        class="fw-bold text-primary student-info-trigger"
-                        style="cursor:pointer;"
-                        data-id="${student.id}">
-                        ${escapeHtml(student.full_name)}
-                    </span>
-                </td>
-
-                <!-- ✅ Hide phone number on mobile -->
-                <td class="d-none d-md-table-cell">${escapeHtml(student.phone_number)}</td>
-
-                <td class="d-none d-md-table-cell">${escapeHtml(student.emergency_contact_name || "-")}</td>
-                <td class="d-none d-md-table-cell">${escapeHtml(student.emergency_contact_number || "-")}</td>
-                <td>${escapeHtml(student.course_completed || "-")}</td>
-                <td>${escapeHtml(student.class_name || "-")}</td>
-
-                <!-- ✅ Keep buttons horizontal -->
-                <td class="d-flex justify-content-center flex-nowrap">
-                    <button class="btn btn-primary btn-sm me-1 btn-edit-student" data-id="${student.id}">
-                        <i class="bi bi-pencil-square"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger btn-delete-student" data-id="${student.id}">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join("");
-    }
-
-
-
-
+    // Escape HTML
     function escapeHtml(str) {
         if (str === null || str === undefined) return "";
         return String(str)
@@ -104,12 +59,109 @@ document.addEventListener("DOMContentLoaded", () => {
             .replace(/'/g, "&#039;");
     }
 
-    // Load + show students
+    // Render students using Method 4 (document fragment)
+    function renderStudents(list) {
+        studentsTbody.innerHTML = ""; // clear old rows
+        if (!list || !list.length) {
+            const tr = document.createElement("tr");
+            const td = document.createElement("td");
+            td.colSpan = 8;
+            td.className = "text-muted py-3";
+            td.textContent = "No students found.";
+            tr.appendChild(td);
+            studentsTbody.appendChild(tr);
+            return;
+        }
+
+        const frag = document.createDocumentFragment();
+
+        list.forEach(student => {
+            const tr = document.createElement("tr");
+            tr.dataset.id = student.id;
+
+            // Email
+            const tdEmail = document.createElement("td");
+            tdEmail.className = "d-none d-md-table-cell";
+            tdEmail.textContent = escapeHtml(student.email);
+            tr.appendChild(tdEmail);
+
+            // Full name clickable on mobile
+            const tdName = document.createElement("td");
+            const spanName = document.createElement("span");
+            spanName.className = "fw-bold text-primary student-info-trigger";
+            spanName.style.cursor = "pointer";
+            spanName.dataset.id = student.id;
+            spanName.textContent = escapeHtml(student.full_name);
+            tdName.appendChild(spanName);
+            tr.appendChild(tdName);
+
+            // Phone number
+            const tdPhone = document.createElement("td");
+            tdPhone.className = "d-none d-md-table-cell";
+            tdPhone.textContent = escapeHtml(student.phone_number);
+            tr.appendChild(tdPhone);
+
+            // Emergency contact name
+            const tdEmergencyName = document.createElement("td");
+            tdEmergencyName.className = "d-none d-md-table-cell";
+            tdEmergencyName.textContent = escapeHtml(student.emergency_contact_name || "-");
+            tr.appendChild(tdEmergencyName);
+
+            // Emergency contact number
+            const tdEmergencyNumber = document.createElement("td");
+            tdEmergencyNumber.className = "d-none d-md-table-cell";
+            tdEmergencyNumber.textContent = escapeHtml(student.emergency_contact_number || "-");
+            tr.appendChild(tdEmergencyNumber);
+
+            // Course
+            const tdCourse = document.createElement("td");
+            tdCourse.textContent = escapeHtml(student.course_completed || "-");
+            tr.appendChild(tdCourse);
+
+            // Class
+            const tdClass = document.createElement("td");
+            tdClass.textContent = escapeHtml(student.class_name || "-");
+            tr.appendChild(tdClass);
+
+            // Actions
+            const tdActions = document.createElement("td");
+            tdActions.className = "d-flex justify-content-center flex-nowrap";
+
+            const editBtn = document.createElement("button");
+            editBtn.className = "btn btn-primary btn-sm me-1 btn-edit-student";
+            editBtn.dataset.id = student.id;
+            editBtn.innerHTML = `<i class="bi bi-pencil-square"></i>`;
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "btn btn-sm btn-outline-danger btn-delete-student";
+            deleteBtn.dataset.id = student.id;
+            deleteBtn.innerHTML = `<i class="bi bi-trash"></i>`;
+
+            tdActions.appendChild(editBtn);
+            tdActions.appendChild(deleteBtn);
+            tr.appendChild(tdActions);
+
+            frag.appendChild(tr);
+        });
+
+        studentsTbody.appendChild(frag);
+    }
+
+    // Load students from server
+    async function fetchStudents() {
+        try {
+            const res = await fetch("../php/get_students.php");
+            return await res.json();
+        } catch (err) {
+            console.error(err);
+            showToast("Failed to fetch students", "danger");
+            return [];
+        }
+    }
+
     async function loadStudents() {
         studentsTbody.innerHTML = `<tr><td colspan="8" class="text-muted py-3">Loading...</td></tr>`;
         const students = await fetchStudents();
-
-        // ✅ store the full list globally so edit/delete can find students
         allStudents = students;
 
         const q = searchInput.value.trim().toLowerCase();
