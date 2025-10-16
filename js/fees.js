@@ -142,14 +142,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // --- Render fees table ---
+    // --- Render fees table (Method 4 / DocumentFragment) ---
     async function loadFees() {
         if (!feesTableBody) return;
+
+        // Show loading row
         feesTableBody.innerHTML = `
-        <tr>
-          <td colspan="5" class="d-none d-sm-table-cell text-muted py-3">Loading...</td>
-          <td colspan="4" class="d-sm-none text-muted py-3">Loading...</td>
-        </tr>`;
+            <tr>
+              <td colspan="5" class="d-none d-sm-table-cell text-muted py-3">Loading...</td>
+              <td colspan="4" class="d-sm-none text-muted py-3">Loading...</td>
+            </tr>`;
+
         pendingChanges = {};
         saveBtn.disabled = true;
 
@@ -160,17 +163,16 @@ document.addEventListener("DOMContentLoaded", () => {
         const feesMap = await fetchFees(className, selectedMonth, currentYear);
         let students = allStudents.filter(s => s.class_name === className);
 
+        // Search filter
         const q = searchInput.value.trim().toLowerCase();
-        if (q) students = students.filter(s =>
-            s.full_name.toLowerCase().includes(q)
-        );
+        if (q) students = students.filter(s => s.full_name.toLowerCase().includes(q));
 
+        // Status filter
         if (statusFilter) {
-            students = students.filter(s =>
-                (feesMap[s.id] || "Pending") === statusFilter
-            );
+            students = students.filter(s => (feesMap[s.id] || "Pending") === statusFilter);
         }
 
+        // No students found
         if (!students.length) {
             feesTableBody.innerHTML = `<tr><td colspan="5" class="text-muted py-3">No students found.</td></tr>`;
             return;
@@ -178,31 +180,72 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const defaultFee = classFees[className] || 0;
 
-        feesTableBody.innerHTML = students.map((s, i) => {
-            const status = feesMap[s.id] || "Pending";
-            const badgeClass =
-                status === "Paid"
-                    ? "text-bg-success"
-                    : status === "Unpaid"
-                        ? "text-bg-danger"
-                        : "text-bg-secondary";
+        // --- Create table rows using DocumentFragment ---
+        const frag = document.createDocumentFragment();
 
-            return `
-                <tr data-id="${s.id}">
-                    <td class="d-none d-sm-table-cell">${i + 1}</td>
-                    <td>${s.full_name}</td>
-                    <td class="fw-semibold">£${defaultFee}</td>
-                    <td><span class="badge ${badgeClass}">${status}</span></td>
-                    <td>
-                        <div class="d-flex gap-2 justify-content-center">
-                            <button class="btn btn-sm btn-outline-success btn-fees-toggle" data-status="Paid">Paid</button>
-                            <button class="btn btn-sm btn-outline-danger btn-fees-toggle" data-status="Unpaid">Unpaid</button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        }).join("");
+        students.forEach((s, i) => {
+            const row = document.createElement("tr");
+            row.setAttribute("data-id", s.id);
+
+            // Index column
+            const idxTd = document.createElement("td");
+            idxTd.className = "d-none d-sm-table-cell";
+            idxTd.textContent = i + 1;
+            row.appendChild(idxTd);
+
+            // Name column
+            const nameTd = document.createElement("td");
+            nameTd.textContent = s.full_name;
+            row.appendChild(nameTd);
+
+            // Amount column
+            const amountTd = document.createElement("td");
+            amountTd.className = "fw-semibold";
+            amountTd.textContent = `£${defaultFee}`;
+            row.appendChild(amountTd);
+
+            // Status column
+            const status = feesMap[s.id] || "Pending";
+            const badgeTd = document.createElement("td");
+            const badge = document.createElement("span");
+            badge.className =
+                status === "Paid"
+                    ? "badge text-bg-success"
+                    : status === "Unpaid"
+                        ? "badge text-bg-danger"
+                        : "badge text-bg-secondary";
+            badge.textContent = status;
+            badgeTd.appendChild(badge);
+            row.appendChild(badgeTd);
+
+            // Actions column
+            const actionsTd = document.createElement("td");
+            const btnContainer = document.createElement("div");
+            btnContainer.className = "d-flex gap-2 justify-content-center";
+
+            const paidBtn = document.createElement("button");
+            paidBtn.className = "btn btn-sm btn-outline-success btn-fees-toggle";
+            paidBtn.setAttribute("data-status", "Paid");
+            paidBtn.textContent = "Paid";
+
+            const unpaidBtn = document.createElement("button");
+            unpaidBtn.className = "btn btn-sm btn-outline-danger btn-fees-toggle";
+            unpaidBtn.setAttribute("data-status", "Unpaid");
+            unpaidBtn.textContent = "Unpaid";
+
+            btnContainer.appendChild(paidBtn);
+            btnContainer.appendChild(unpaidBtn);
+            actionsTd.appendChild(btnContainer);
+            row.appendChild(actionsTd);
+
+            frag.appendChild(row);
+        });
+
+        // Clear existing rows and append fragment
+        feesTableBody.innerHTML = "";
+        feesTableBody.appendChild(frag);
     }
+
 
     // --- Paid/Unpaid toggle ---
     document.addEventListener("click", (e) => {

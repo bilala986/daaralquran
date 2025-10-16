@@ -253,11 +253,14 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- Main attendance loader ---
     async function loadAttendance() {
         if (!attendanceTableBody) return;
+
+        // Show loading
         attendanceTableBody.innerHTML = `
-        <tr>
-          <td colspan="4" class="d-none d-sm-table-cell text-muted py-3">Loading...</td>
-          <td colspan="3" class="d-sm-none text-muted py-3">Loading...</td>
-        </tr>`;
+            <tr>
+              <td colspan="4" class="d-none d-sm-table-cell text-muted py-3">Loading...</td>
+              <td colspan="3" class="d-sm-none text-muted py-3">Loading...</td>
+            </tr>`;
+
         pendingChanges = {};
         if (saveBtn) saveBtn.disabled = true;
 
@@ -265,7 +268,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const className = classSelect.value;
         if (!selectedAttendanceDate) selectedAttendanceDate = getNextClassDate(className);
 
-        // ensure selectedDate element displays correctly
         selectedDateEl.textContent = toDisplayDate(selectedAttendanceDate);
 
         const dateStrForApi = toISODateLocal(selectedAttendanceDate); // YYYY-MM-DD
@@ -287,31 +289,68 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        attendanceTableBody.innerHTML = students.map((s, i) => {
-            const status = attendanceMap[s.id] || "–";
-            return `
-                <tr data-id="${s.id}">
-                    <td class="d-none d-sm-table-cell">${i + 1}</td>
-                    <td>${escapeHtml(s.full_name)}</td>
-                    <td>
-                        <span class="badge ${
-                            status === "Present"
-                                ? "text-bg-success"
-                                : status === "Absent"
-                                ? "text-bg-danger"
-                                : "text-bg-secondary"
-                        }">${status}</span>
-                    </td>
-                    <td>
-                        <div class="d-flex gap-2 justify-content-center">
-                            <button class="btn btn-sm btn-outline-success btn-attendance-toggle" data-status="Present">Present</button>
-                            <button class="btn btn-sm btn-outline-danger btn-attendance-toggle" data-status="Absent">Absent</button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        }).join("");
+        // --- Method 4: Render via DocumentFragment ---
+        const frag = document.createDocumentFragment();
 
+        students.forEach((s, i) => {
+            const status = attendanceMap[s.id] || "–";
+
+            // Row
+            const row = document.createElement("tr");
+            row.dataset.id = s.id;
+
+            // Index column
+            const idxTd = document.createElement("td");
+            idxTd.className = "d-none d-sm-table-cell";
+            idxTd.textContent = i + 1;
+            row.appendChild(idxTd);
+
+            // Name column
+            const nameTd = document.createElement("td");
+            nameTd.innerHTML = escapeHtml(s.full_name);
+            row.appendChild(nameTd);
+
+            // Status badge
+            const statusTd = document.createElement("td");
+            const badge = document.createElement("span");
+            badge.className = "badge " +
+                (status === "Present"
+                    ? "text-bg-success"
+                    : status === "Absent"
+                    ? "text-bg-danger"
+                    : "text-bg-secondary");
+            badge.textContent = status;
+            statusTd.appendChild(badge);
+            row.appendChild(statusTd);
+
+            // Actions (Present/Absent buttons)
+            const actionsTd = document.createElement("td");
+            const div = document.createElement("div");
+            div.className = "d-flex gap-2 justify-content-center";
+
+            const presentBtn = document.createElement("button");
+            presentBtn.type = "button";
+            presentBtn.className = "btn btn-sm btn-outline-success btn-attendance-toggle";
+            presentBtn.dataset.status = "Present";
+            presentBtn.textContent = "Present";
+
+            const absentBtn = document.createElement("button");
+            absentBtn.type = "button";
+            absentBtn.className = "btn btn-sm btn-outline-danger btn-attendance-toggle";
+            absentBtn.dataset.status = "Absent";
+            absentBtn.textContent = "Absent";
+
+            div.appendChild(presentBtn);
+            div.appendChild(absentBtn);
+            actionsTd.appendChild(div);
+            row.appendChild(actionsTd);
+
+            frag.appendChild(row);
+        });
+
+        // Clear old rows and append new
+        attendanceTableBody.innerHTML = "";
+        attendanceTableBody.appendChild(frag);
     }
 
     // --- Event handlers ---
