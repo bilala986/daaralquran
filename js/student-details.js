@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     // Elements
+    const addButton = document.getElementById("addButton");
     const addForm = document.getElementById("addStudentForm");
     const editForm = document.getElementById("editStudentForm");
     const studentsTbody = document.getElementById("studentsTbody");
@@ -26,6 +27,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let allStudents = [];
     let studentToDeleteId = null;
+
+    function isMobile() {
+        return window.innerWidth < 768; // Bootstrap md breakpoint
+    }
 
     // Toast helper
     function showToast(message, type = "success") {
@@ -54,12 +59,9 @@ document.addEventListener("DOMContentLoaded", () => {
             .replace(/'/g, "&#039;");
     }
 
-    // Render students using document fragment (Method 4)
+    // Render students using Method 4 (document fragment)
     function renderStudents(list) {
         studentsTbody.innerHTML = ""; // clear old rows
-
-        const frag = document.createDocumentFragment();
-
         if (!list || !list.length) {
             const tr = document.createElement("tr");
             const td = document.createElement("td");
@@ -67,82 +69,85 @@ document.addEventListener("DOMContentLoaded", () => {
             td.className = "text-muted py-3";
             td.textContent = "No students found.";
             tr.appendChild(td);
-            frag.appendChild(tr);
-        } else {
-            list.forEach(student => {
-                const tr = document.createElement("tr");
-                tr.dataset.id = student.id;
-
-                // Email
-                const tdEmail = document.createElement("td");
-                tdEmail.className = "d-none d-md-table-cell";
-                tdEmail.textContent = escapeHtml(student.email);
-                tr.appendChild(tdEmail);
-
-                // Full name clickable on mobile
-                const tdName = document.createElement("td");
-                const spanName = document.createElement("span");
-                spanName.className = "fw-bold text-primary student-info-trigger";
-                spanName.style.cursor = "pointer";
-                spanName.dataset.id = student.id;
-                spanName.textContent = escapeHtml(student.full_name);
-                tdName.appendChild(spanName);
-                tr.appendChild(tdName);
-
-                // Phone number
-                const tdPhone = document.createElement("td");
-                tdPhone.className = "d-none d-md-table-cell";
-                tdPhone.textContent = escapeHtml(student.phone_number);
-                tr.appendChild(tdPhone);
-
-                // Emergency contact name
-                const tdEmergencyName = document.createElement("td");
-                tdEmergencyName.className = "d-none d-md-table-cell";
-                tdEmergencyName.textContent = escapeHtml(student.emergency_contact_name || "-");
-                tr.appendChild(tdEmergencyName);
-
-                // Emergency contact number
-                const tdEmergencyNumber = document.createElement("td");
-                tdEmergencyNumber.className = "d-none d-md-table-cell";
-                tdEmergencyNumber.textContent = escapeHtml(student.emergency_contact_number || "-");
-                tr.appendChild(tdEmergencyNumber);
-
-                // Course
-                const tdCourse = document.createElement("td");
-                tdCourse.textContent = escapeHtml(student.course_completed || "-");
-                tr.appendChild(tdCourse);
-
-                // Class
-                const tdClass = document.createElement("td");
-                tdClass.textContent = escapeHtml(student.class_name || "-");
-                tr.appendChild(tdClass);
-
-                // Actions
-                const tdActions = document.createElement("td");
-                tdActions.className = "d-flex justify-content-center flex-nowrap";
-
-                const editBtn = document.createElement("button");
-                editBtn.className = "btn btn-primary btn-sm me-1 btn-edit-student";
-                editBtn.dataset.id = student.id;
-                editBtn.innerHTML = `<i class="bi bi-pencil-square"></i>`;
-
-                const deleteBtn = document.createElement("button");
-                deleteBtn.className = "btn btn-sm btn-outline-danger btn-delete-student";
-                deleteBtn.dataset.id = student.id;
-                deleteBtn.innerHTML = `<i class="bi bi-trash"></i>`;
-
-                tdActions.appendChild(editBtn);
-                tdActions.appendChild(deleteBtn);
-                tr.appendChild(tdActions);
-
-                frag.appendChild(tr);
-            });
+            studentsTbody.appendChild(tr);
+            return;
         }
+
+        const frag = document.createDocumentFragment();
+
+        list.forEach(student => {
+            const tr = document.createElement("tr");
+            tr.dataset.id = student.id;
+
+            // Email
+            const tdEmail = document.createElement("td");
+            tdEmail.className = "d-none d-md-table-cell";
+            tdEmail.textContent = escapeHtml(student.email);
+            tr.appendChild(tdEmail);
+
+            // Full name clickable on mobile
+            const tdName = document.createElement("td");
+            const spanName = document.createElement("span");
+            spanName.className = "fw-bold text-primary student-info-trigger";
+            spanName.style.cursor = "pointer";
+            spanName.dataset.id = student.id;
+            spanName.textContent = escapeHtml(student.full_name);
+            tdName.appendChild(spanName);
+            tr.appendChild(tdName);
+
+            // Phone number
+            const tdPhone = document.createElement("td");
+            tdPhone.className = "d-none d-md-table-cell";
+            tdPhone.textContent = escapeHtml(student.phone_number);
+            tr.appendChild(tdPhone);
+
+            // Emergency contact name
+            const tdEmergencyName = document.createElement("td");
+            tdEmergencyName.className = "d-none d-md-table-cell";
+            tdEmergencyName.textContent = escapeHtml(student.emergency_contact_name || "-");
+            tr.appendChild(tdEmergencyName);
+
+            // Emergency contact number
+            const tdEmergencyNumber = document.createElement("td");
+            tdEmergencyNumber.className = "d-none d-md-table-cell";
+            tdEmergencyNumber.textContent = escapeHtml(student.emergency_contact_number || "-");
+            tr.appendChild(tdEmergencyNumber);
+
+            // Course
+            const tdCourse = document.createElement("td");
+            tdCourse.textContent = escapeHtml(student.course_completed || "-");
+            tr.appendChild(tdCourse);
+
+            // Class
+            const tdClass = document.createElement("td");
+            tdClass.textContent = escapeHtml(student.class_name || "-");
+            tr.appendChild(tdClass);
+
+            // Actions
+            const tdActions = document.createElement("td");
+            tdActions.className = "d-flex justify-content-center flex-nowrap";
+
+            const editBtn = document.createElement("button");
+            editBtn.className = "btn btn-primary btn-sm me-1 btn-edit-student";
+            editBtn.dataset.id = student.id;
+            editBtn.innerHTML = `<i class="bi bi-pencil-square"></i>`;
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "btn btn-sm btn-outline-danger btn-delete-student";
+            deleteBtn.dataset.id = student.id;
+            deleteBtn.innerHTML = `<i class="bi bi-trash"></i>`;
+
+            tdActions.appendChild(editBtn);
+            tdActions.appendChild(deleteBtn);
+            tr.appendChild(tdActions);
+
+            frag.appendChild(tr);
+        });
 
         studentsTbody.appendChild(frag);
     }
 
-    // Fetch students from server
+    // Load students from server
     async function fetchStudents() {
         try {
             const res = await fetch("../php/get_students.php");
@@ -155,18 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function loadStudents() {
-        // Show loading row using document fragment
-        const loadingFrag = document.createDocumentFragment();
-        const tr = document.createElement("tr");
-        const td = document.createElement("td");
-        td.colSpan = 8;
-        td.className = "text-muted py-3";
-        td.textContent = "Loading...";
-        tr.appendChild(td);
-        loadingFrag.appendChild(tr);
-        studentsTbody.innerHTML = "";
-        studentsTbody.appendChild(loadingFrag);
-
+        studentsTbody.innerHTML = `<tr><td colspan="8" class="text-muted py-3">Loading...</td></tr>`;
         const students = await fetchStudents();
         allStudents = students;
 
@@ -192,23 +186,34 @@ document.addEventListener("DOMContentLoaded", () => {
         renderStudents(filtered);
     }
 
+
+
+
+
+
     // Refresh button
     if (refreshBtn) {
         refreshBtn.addEventListener("click", () => {
+            // clear search
             if (searchInput) searchInput.value = "";
+
+            // clear modal filters
             const filterCourse = document.getElementById("filterCourse");
             const filterClassModal = document.getElementById("filterClassModal");
             if (filterCourse) filterCourse.value = "";
             if (filterClassModal) filterClassModal.value = "";
+
+            // reload full list
             loadStudents();
         });
     }
 
-    // Filter actions
+
+    // Filter / search actions
     if (filterBtn) filterBtn.addEventListener("click", loadStudents);
     if (filterClass) filterClass.addEventListener("change", loadStudents);
 
-    // Course "Other" toggles
+    // Add course "Other" toggle
     if (addCourseDropdown) {
         addCourseDropdown.addEventListener("change", () => {
             const isOther = addCourseDropdown.value === "Other";
@@ -217,6 +222,8 @@ document.addEventListener("DOMContentLoaded", () => {
             if (isOther) addCourseOther.focus();
         });
     }
+
+    // Edit course "Other" toggle
     if (editCourseDropdown) {
         editCourseDropdown.addEventListener("change", () => {
             const isOther = editCourseDropdown.value === "Other";
@@ -226,18 +233,24 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Add student form submit
+    // Submit add form
     if (addForm) {
         addForm.addEventListener("submit", async (e) => {
             e.preventDefault();
-            if (addCourseDropdown.value === "Other" && !addCourseOther.value.trim()) {
-                showToast("Please enter a course name when selecting 'Other'.", "danger");
-                addCourseOther.focus();
-                return;
+
+            if (addCourseDropdown.value === "Other") {
+                const customCourse = addCourseOther.value.trim();
+                if (!customCourse) {
+                    showToast("Please enter a course name when selecting 'Other'.", "danger");
+                    addCourseOther.focus();
+                    return;
+                }
             }
 
             const formData = new FormData(addForm);
-            if (addCourseDropdown.value === "Other") formData.set("course_completed", addCourseOther.value.trim());
+            if (addCourseDropdown.value === "Other") {
+                formData.set("course_completed", addCourseOther.value.trim());
+            }
 
             try {
                 const res = await fetch("../php/add_student.php", { method: "POST", body: formData });
@@ -258,15 +271,18 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Edit / Delete delegated clicks
-    document.addEventListener("click", async (e) => {
+    // Click handlers for edit/delete buttons (delegated)
+    document.addEventListener("click", (e) => {
         const editBtn = e.target.closest(".btn-edit-student");
         if (editBtn) {
             const id = editBtn.dataset.id;
             const student = allStudents.find(s => s.id == id);
-            if (!student) { showToast("Student not found", "danger"); return; }
+            if (!student) {
+                showToast("Student not found", "danger");
+                return;
+            }
 
-            // Populate edit form
+            // populate edit form
             document.getElementById("edit_student_id").value = student.id;
             document.getElementById("edit_email").value = student.email;
             document.getElementById("edit_full_name").value = student.full_name;
@@ -299,43 +315,38 @@ document.addEventListener("DOMContentLoaded", () => {
             deleteStudentModal.show();
             return;
         }
-
-        const infoTrigger = e.target.closest(".student-info-trigger");
-        if (infoTrigger) {
-            const studentId = infoTrigger.dataset.id;
-            const student = allStudents.find(s => s.id == studentId);
-            if (!student) return;
-
-            const title = document.getElementById("studentInfoTitle");
-            const body = document.getElementById("studentInfoBody");
-            title.textContent = student.full_name;
-
-            // Fill modal content using document fragment
-            body.innerHTML = "";
-            const frag = document.createDocumentFragment();
-
-            const fields = [
-                ["Email", student.email],
-                ["Phone", student.phone_number],
-                ["Emergency Contact Name", student.emergency_contact_name || "-"],
-                ["Emergency Contact Number", student.emergency_contact_number || "-"],
-                ["Course Completed", student.course_completed || "-"],
-                ["Class", student.class_name || "-"]
-            ];
-
-            fields.forEach(([label, value]) => {
-                const p = document.createElement("p");
-                const strong = document.createElement("strong");
-                strong.textContent = label + ": ";
-                p.appendChild(strong);
-                p.appendChild(document.createTextNode(value));
-                frag.appendChild(p);
-            });
-
-            body.appendChild(frag);
-            new bootstrap.Modal(document.getElementById("studentInfoModal")).show();
-        }
     });
+
+
+
+
+
+    // ✅ Show modal when clicking the full name
+    document.addEventListener("click", (e) => {
+        const trigger = e.target.closest(".student-info-trigger");
+        if (!trigger) return;
+
+        const studentId = trigger.dataset.id;
+        const student = allStudents.find(s => s.id == studentId);
+        if (!student) return;
+
+        // Fill modal content
+        document.getElementById("studentInfoTitle").textContent = student.full_name;
+
+        document.getElementById("studentInfoBody").innerHTML = `
+            <p><strong>Email:</strong> ${escapeHtml(student.email)}</p>
+            <p><strong>Phone:</strong> ${escapeHtml(student.phone_number)}</p>
+            <p><strong>Emergency Contact Name:</strong> ${escapeHtml(student.emergency_contact_name || "-")}</p>
+            <p><strong>Emergency Contact Number:</strong> ${escapeHtml(student.emergency_contact_number || "-")}</p>
+            <p><strong>Course Completed:</strong> ${escapeHtml(student.course_completed || "-")}</p>
+            <p><strong>Class:</strong> ${escapeHtml(student.class_name || "-")}</p>
+        `;
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById("studentInfoModal"));
+        modal.show();
+    });
+
 
 
 
@@ -347,7 +358,6 @@ document.addEventListener("DOMContentLoaded", () => {
             e.preventDefault();
             const formData = new FormData(editForm);
 
-            // Handle "Other" course input
             if (editCourseDropdown.value === "Other") {
                 const customCourse = editCourseOther.value.trim();
                 if (!customCourse) {
@@ -375,11 +385,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Handle delete confirmation
+    // Confirm delete
     if (confirmDeleteBtn) {
         confirmDeleteBtn.addEventListener("click", async () => {
             if (!studentToDeleteId) return;
-
             try {
                 const res = await fetch("../php/delete_student.php", {
                     method: "POST",
@@ -401,24 +410,40 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-
-    // Filter modal actions
-    const filterModalEl = document.getElementById("filterModal");
-    document.getElementById("filterBtn")?.addEventListener("click", () => new bootstrap.Modal(filterModalEl).show());
-    document.getElementById("applyFilters")?.addEventListener("click", () => {
-        loadStudents();
-        bootstrap.Modal.getInstance(filterModalEl)?.hide();
+    
+    
+    
+    
+    
+    
+    // Open modal when filter button is clicked
+    document.getElementById("filterBtn").addEventListener("click", () => {
+        const modal = new bootstrap.Modal(document.getElementById("filterModal"));
+        modal.show();
     });
-    document.getElementById("clearFilters")?.addEventListener("click", () => {
+
+    // Apply filters
+    document.getElementById("applyFilters").addEventListener("click", () => {
+        loadStudents();
+        const modalEl = document.getElementById("filterModal");
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
+    });
+
+    // ✅ Clear all filters and reload
+    document.getElementById("clearFilters").addEventListener("click", () => {
         document.getElementById("filterCourse").value = "";
         document.getElementById("filterClassModal").value = "";
         loadStudents();
     });
 
-    // Live search using Method 4
+
+    
+    // ✅ Live search while typing
     if (searchInput) {
         searchInput.addEventListener("input", () => {
             const q = searchInput.value.trim().toLowerCase();
+
             const filtered = allStudents.filter(s => {
                 const haystack = `
                     ${s.full_name}
@@ -429,11 +454,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 `.toLowerCase();
                 return haystack.includes(q);
             });
+
             renderStudents(filtered);
         });
     }
 
-    // Initial load
-    loadStudents();
+    
+    
+    
 
+    // initial load
+    loadStudents();
 });
