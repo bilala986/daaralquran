@@ -245,14 +245,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    // --- Main attendance loader ---
     async function loadAttendance() {
         if (!attendanceTableBody) return;
+
+        // Show loading
         attendanceTableBody.innerHTML = `
-        <tr>
-          <td colspan="4" class="d-none d-sm-table-cell text-muted py-3">Loading...</td>
-          <td colspan="3" class="d-sm-none text-muted py-3">Loading...</td>
-        </tr>`;
+            <tr>
+              <td colspan="4" class="d-none d-sm-table-cell text-muted py-3">Loading...</td>
+              <td colspan="3" class="d-sm-none text-muted py-3">Loading...</td>
+            </tr>`;
         pendingChanges = {};
         if (saveBtn) saveBtn.disabled = true;
 
@@ -260,10 +261,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const className = classSelect.value;
         if (!selectedAttendanceDate) selectedAttendanceDate = getNextClassDate(className);
 
-        // ensure selectedDate element displays correctly
         selectedDateEl.textContent = toDisplayDate(selectedAttendanceDate);
-
-        const dateStrForApi = toISODateLocal(selectedAttendanceDate); // YYYY-MM-DD
+        const dateStrForApi = toISODateLocal(selectedAttendanceDate);
         const attendanceMap = await fetchAttendanceByClassAndDate(className, dateStrForApi);
 
         // Filter students by class
@@ -282,32 +281,64 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        attendanceTableBody.innerHTML = students.map((s, i) => {
-            const status = attendanceMap[s.id] || "–";
-            return `
-                <tr data-id="${s.id}">
-                    <td class="d-none d-sm-table-cell">${i + 1}</td>
-                    <td>${escapeHtml(s.full_name)}</td>
-                    <td>
-                        <span class="badge ${
-                            status === "Present"
-                                ? "text-bg-success"
-                                : status === "Absent"
-                                ? "text-bg-danger"
-                                : "text-bg-secondary"
-                        }">${status}</span>
-                    </td>
-                    <td>
-                        <div class="d-flex gap-2 justify-content-center">
-                            <button class="btn btn-sm btn-outline-success btn-attendance-toggle" data-status="Present">Present</button>
-                            <button class="btn btn-sm btn-outline-danger btn-attendance-toggle" data-status="Absent">Absent</button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        }).join("");
+        // --- Method 4: document fragment ---
+        const frag = document.createDocumentFragment();
 
+        students.forEach((s, i) => {
+            const tr = document.createElement("tr");
+            tr.dataset.id = s.id;
+
+            // Index
+            const tdIndex = document.createElement("td");
+            tdIndex.className = "d-none d-sm-table-cell";
+            tdIndex.textContent = i + 1;
+            tr.appendChild(tdIndex);
+
+            // Full name
+            const tdName = document.createElement("td");
+            tdName.textContent = escapeHtml(s.full_name);
+            tr.appendChild(tdName);
+
+            // Status badge
+            const tdStatus = document.createElement("td");
+            const spanBadge = document.createElement("span");
+            const status = attendanceMap[s.id] || "–";
+            spanBadge.className = `badge ${
+                status === "Present" ? "text-bg-success" :
+                status === "Absent" ? "text-bg-danger" :
+                "text-bg-secondary"
+            }`;
+            spanBadge.textContent = status;
+            tdStatus.appendChild(spanBadge);
+            tr.appendChild(tdStatus);
+
+            // Toggle buttons
+            const tdActions = document.createElement("td");
+            const btnContainer = document.createElement("div");
+            btnContainer.className = "d-flex gap-2 justify-content-center";
+
+            const presentBtn = document.createElement("button");
+            presentBtn.className = status === "Present" ? "btn btn-success btn-sm" : "btn btn-sm btn-outline-success";
+            presentBtn.dataset.status = "Present";
+            presentBtn.textContent = "Present";
+
+            const absentBtn = document.createElement("button");
+            absentBtn.className = status === "Absent" ? "btn btn-danger btn-sm" : "btn btn-sm btn-outline-danger";
+            absentBtn.dataset.status = "Absent";
+            absentBtn.textContent = "Absent";
+
+            btnContainer.appendChild(presentBtn);
+            btnContainer.appendChild(absentBtn);
+            tdActions.appendChild(btnContainer);
+            tr.appendChild(tdActions);
+
+            frag.appendChild(tr);
+        });
+
+        attendanceTableBody.innerHTML = "";
+        attendanceTableBody.appendChild(frag);
     }
+
 
     // --- Event handlers ---
     nextClassBtn?.addEventListener("click", () => {
