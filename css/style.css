@@ -98,10 +98,11 @@ body {
   animation-timing-function: ease-in-out;
 }
 
-.floating-word:nth-of-type(1) { animation-name: drift1; }
-.floating-word:nth-of-type(2) { animation-name: drift2; }
-.floating-word:nth-of-type(3) { animation-name: drift3; }
-.floating-word:nth-of-type(4) { animation-name: drift4; }
+.floating-word:nth-of-type(4n + 1) { animation-name: drift1; }
+.floating-word:nth-of-type(4n + 2) { animation-name: drift2; }
+.floating-word:nth-of-type(4n + 3) { animation-name: drift3; }
+.floating-word:nth-of-type(4n + 4) { animation-name: drift4; }
+
 
 @keyframes drift1 {
   0% { transform: translate(0, 0) rotate(0deg); }

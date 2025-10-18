@@ -165,9 +165,26 @@ document.addEventListener("DOMContentLoaded", () => {
         allStudents = students;
 
         const q = searchInput.value.trim().toLowerCase();
-        const courseVal = document.getElementById("filterCourse")?.value || "";
         const classVal = document.getElementById("filterClassModal")?.value || "";
+        const filterCourseSelect = document.getElementById("filterCourse");
+        const courseVal = filterCourseSelect?.value || "";
 
+        // --- Ensure custom courses appear in filter dropdown ---
+        const predefinedCourses = ["Tafseer of Juz 30", "Seerah Course", "40 Hadeeth of Imam Nawwawi", "None"];
+        const currentOptions = Array.from(filterCourseSelect.options).map(opt => opt.value);
+        const customCourses = [...new Set(students
+            .map(s => s.course_completed)
+            .filter(c => c && !predefinedCourses.includes(c) && !currentOptions.includes(c))
+        )];
+
+        customCourses.forEach(course => {
+            const opt = document.createElement("option");
+            opt.value = course;
+            opt.textContent = course;
+            filterCourseSelect.appendChild(opt);
+        });
+
+        // --- Filter students ---
         const filtered = students.filter(s => {
             const haystack = [
                 s.full_name,
@@ -178,13 +195,24 @@ document.addEventListener("DOMContentLoaded", () => {
             ].join(" ").toLowerCase();
 
             const matchesSearch = !q || haystack.includes(q);
-            const matchesCourse = !courseVal || s.course_completed === courseVal;
+
+            // Course filter logic
+            let matchesCourse = true;
+            if (courseVal) {
+                if (courseVal === "Other") {
+                    matchesCourse = !predefinedCourses.includes(s.course_completed);
+                } else {
+                    matchesCourse = s.course_completed === courseVal;
+                }
+            }
+
             const matchesClass = !classVal || s.class_name === classVal;
             return matchesSearch && matchesCourse && matchesClass;
         });
 
         renderStudents(filtered);
     }
+
 
 
 
