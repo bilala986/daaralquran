@@ -1,0 +1,143 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Reem Kufi', sans-serif;
+}
+
+body {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  overflow: hidden;
+  position: relative;
+  background: radial-gradient(circle at center, #0e1a2b 0%, #050914 100%);
+  animation: backgroundPulse 8s infinite ease-in-out;
+}
+
+/* Background Pulse */
+@keyframes backgroundPulse {
+  0%, 100% {
+    background: radial-gradient(circle at center, #0e1a2b 0%, #050914 100%);
+  }
+  50% {
+    background: radial-gradient(circle at center, #0a1625 0%, #04070f 100%);
+  }
+}
+
+.container {
+  text-align: center;
+  z-index: 3;
+}
+
+/* Title Flicker */
+.title-flicker {
+  font-size: 4rem;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+  text-shadow: 0 0 15px rgba(0, 200, 255, 0.4);
+  animation: neonFlicker 3s infinite;
+}
+
+@keyframes neonFlicker {
+  0%, 100% { opacity: 1; text-shadow: 0 0 15px rgba(0, 200, 255, 0.5); }
+  50% { opacity: 0.85; text-shadow: 0 0 5px rgba(0, 200, 255, 0.2); }
+}
+
+/* Tagline */
+.tagline {
+  margin-bottom: 35px;
+  font-size: 1.1rem;
+  opacity: 0.7;
+  letter-spacing: 1px;
+}
+
+/* Login Button with Ripple */
+.login-btn {
+  padding: 12px 32px;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #00b4ff;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 12px rgba(0, 180, 255, 0.4);
+  transition: transform 0.2s ease;
+}
+
+.login-btn:hover {
+  transform: translateY(-2px);
+}
+
+.login-btn:after {
+  content: "";
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  transform: scale(1);
+  opacity: 0;
+  transition: all 0.6s ease-out;
+}
+
+.login-btn:hover:after {
+  transform: scale(20);
+  opacity: 0;
+}
+
+/* Footer */
+.footer-text {
+  margin-top: 30px;
+  font-size: 0.9rem;
+  opacity: 0.6;
+}
+
+/* Floating Arabic Words */
+.floating-word {
+  position: absolute;
+  font-size: 1.4rem;
+  opacity: 0.12;
+  animation: floatWords 12s infinite ease-in-out;
+  user-select: none;
+  z-index: 1;
+}
+
+@keyframes floatWords {
+  0% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-25px) rotate(6deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+
+/* Glow Orbs */
+.glow {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.3;
+  z-index: 0;
+  animation: floatGlow 8s infinite ease-in-out;
+}
+
+.glow.one {
+  background: #1e90ff;
+  top: 10%;
+  left: 20%;
+}
+
+.glow.two {
+  background: #11ffee;
+  bottom: 15%;
+  right: 20%;
+}
+
+@keyframes floatGlow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}

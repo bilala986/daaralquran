@@ -1,102 +1,38 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>دار القرآن</title>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>دار القرآن</title>
 
-      <!-- Font -->
-      <link rel="preconnect" href="https://fonts.googleapis.com">
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-      <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400..700&display=swap" rel="stylesheet">
+  <!-- Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400..700&display=swap" rel="stylesheet">
 
-      <!-- Styles -->
-      <style>
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-          font-family: 'Reem Kufi', sans-serif;
-        }
+  <!-- External CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="background-overlay"></div>
 
-        body {
-          height: 100vh;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          background: radial-gradient(circle at center, #0e1a2b 0%, #050914 100%);
-          color: #fff;
-          overflow: hidden;
-        }
+  <!-- Floating Arabic Words -->
+  <div class="floating-word" style="top: 20%; right: 10%;">نور</div>
+  <div class="floating-word" style="top: 60%; left: 15%;">حق</div>
+  <div class="floating-word" style="top: 35%; left: 50%;">علم</div>
+  <div class="floating-word" style="top: 75%; right: 30%;">أمل</div>
 
-        .container {
-          text-align: center;
-        }
+  <!-- Glow Elements -->
+  <div class="glow one"></div>
+  <div class="glow two"></div>
 
-        h1 {
-          font-size: 4rem;
-          letter-spacing: 2px;
-          margin-bottom: 40px;
-          text-shadow: 0 0 15px rgba(0, 200, 255, 0.4);
-        }
-
-        .login-btn {
-          padding: 12px 32px;
-          font-size: 1.1rem;
-          border: none;
-          border-radius: 8px;
-          cursor: pointer;
-          background: #00b4ff;
-          color: #fff;
-          transition: all 0.2s ease;
-          box-shadow: 0 0 12px rgba(0, 180, 255, 0.4);
-        }
-
-        .login-btn:hover {
-          background: #14c8ff;
-          box-shadow: 0 0 20px rgba(0, 180, 255, 0.7);
-          transform: translateY(-2px);
-        }
-
-        /* Futuristic subtle animation elements */
-        .glow {
-          position: absolute;
-          width: 200px;
-          height: 200px;
-          border-radius: 50%;
-          filter: blur(120px);
-          opacity: 0.3;
-          z-index: -1;
-          animation: floatGlow 8s infinite ease-in-out;
-        }
-
-        .glow.one {
-          background: #1e90ff;
-          top: 10%;
-          left: 20%;
-        }
-
-        .glow.two {
-          background: #11ffee;
-          bottom: 15%;
-          right: 20%;
-        }
-
-        @keyframes floatGlow {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-20px); }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="glow one"></div>
-      <div class="glow two"></div>
-
-      <div class="container">
-        <h1>دار القرآن</h1>
-        <a href="login.html">
-          <button class="login-btn">Login</button>
-        </a>
-      </div>
-    </body>
+  <div class="container">
+    <h1 class="title-flicker">دار القرآن</h1>
+    <p class="tagline">Administration Access</p>
+    <a href="login.html">
+      <button class="login-btn">Login</button>
+    </a>
+    <p class="footer-text">© دار القرآن • Admin Portal</p>
+  </div>
+</body>
 </html>
