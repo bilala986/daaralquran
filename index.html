@@ -1,118 +1,102 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daar Al-Qur'aan</title>
-    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        /* Minimal custom CSS only for hover effect */
-        .course-card:hover {
-            transform: translateY(-5px);
-            transition: transform 0.3s ease;
+<html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>دار القرآن</title>
+
+      <!-- Font -->
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400..700&display=swap" rel="stylesheet">
+
+      <!-- Styles -->
+      <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+          font-family: 'Reem Kufi', sans-serif;
         }
-    </style>
+
+        body {
+          height: 100vh;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          background: radial-gradient(circle at center, #0e1a2b 0%, #050914 100%);
+          color: #fff;
+          overflow: hidden;
+        }
+
+        .container {
+          text-align: center;
+        }
+
+        h1 {
+          font-size: 4rem;
+          letter-spacing: 2px;
+          margin-bottom: 40px;
+          text-shadow: 0 0 15px rgba(0, 200, 255, 0.4);
+        }
+
+        .login-btn {
+          padding: 12px 32px;
+          font-size: 1.1rem;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          background: #00b4ff;
+          color: #fff;
+          transition: all 0.2s ease;
+          box-shadow: 0 0 12px rgba(0, 180, 255, 0.4);
+        }
+
+        .login-btn:hover {
+          background: #14c8ff;
+          box-shadow: 0 0 20px rgba(0, 180, 255, 0.7);
+          transform: translateY(-2px);
+        }
+
+        /* Futuristic subtle animation elements */
+        .glow {
+          position: absolute;
+          width: 200px;
+          height: 200px;
+          border-radius: 50%;
+          filter: blur(120px);
+          opacity: 0.3;
+          z-index: -1;
+          animation: floatGlow 8s infinite ease-in-out;
+        }
+
+        .glow.one {
+          background: #1e90ff;
+          top: 10%;
+          left: 20%;
+        }
+
+        .glow.two {
+          background: #11ffee;
+          bottom: 15%;
+          right: 20%;
+        }
+
+        @keyframes floatGlow {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-20px); }
+        }
+      </style>
     </head>
     <body>
+      <div class="glow one"></div>
+      <div class="glow two"></div>
 
-        <!-- Navbar -->
-        <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
-            <div class="container">
-                <a class="navbar-brand fw-bold" href="#">Daar Al-Qur'aan</a>
-                <div class="ms-auto">
-                    <a href="login.html" class="btn btn-outline-primary me-2">Login</a>
-                    <a href="signup.html" class="btn btn-primary">Sign Up</a>
-                </div>
-            </div>
-        </nav>
-
-        <!-- Hero Section -->
-        <section class="bg-light text-center py-5">
-            <div class="container">
-                <h1 class="fw-bold text-primary mb-3">Welcome to Daar Al-Qur'aan</h1>
-                <p class="lead mb-4">Empowering women through Qur'aan education</p>
-                <p class="fst-italic text-secondary mb-4">"Indeed, those who believe and do righteous deeds â€” the Most Merciful will appoint for them affection." (Qur'an 19:96)</p>
-                <a href="signup.html" class="btn btn-success btn-lg">Register Now</a>
-            </div>
-        </section>
-
-        <!-- Course Overview Section -->
-        <div class="container my-5">
-            <div class="text-center mb-5">
-                <h2 class="fw-bold text-primary mb-3">Quranic Arabic Course 2025 for Girls (Ages 12+)</h2>
-                <p>Alhamdulillah! Daar Al-Qur'an Youth Club is offering a new course to enhance Qur'aanic knowledge and Arabic understanding.</p>
-            </div>
-
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="card shadow-sm p-3 text-center border-0 course-card h-100">
-                        <h5 class="fw-bold">Course Start Date</h5>
-                        <p>3rd October 2025</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card shadow-sm p-3 text-center border-0 course-card h-100">
-                        <h5 class="fw-bold">Age Group</h5>
-                        <p>Girls 12+ years</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card shadow-sm p-3 text-center border-0 course-card h-100">
-                        <h5 class="fw-bold">Timings & Day</h5>
-                        <p>Friday, 5:30 - 7:00 pm (+/- 15 mins)</p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card shadow-sm p-3 text-center border-0 course-card h-100">
-                        <h5 class="fw-bold">Venue</h5>
-                        <p>AIC (Arabic Islamic Centre), Unit 6, Hartley Apartments, Perceval Square, College Road, Harrow, HA1 1ER</p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card shadow-sm p-3 text-center border-0 course-card h-100">
-                        <h5 class="fw-bold">Contribution</h5>
-                        <p>Â£10 per student/month</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Classes Section -->
-        <div class="container mb-5">
-            <div class="text-center mb-4">
-                <h2 class="fw-bold text-primary mb-3">Our Classes</h2>
-                <p>Choose the class that suits your level and start your Qur'aanic journey.</p>
-            </div>
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="card shadow-sm p-3 text-center border-0 course-card h-100">
-                        <h5 class="fw-bold">Class 1: Beginner</h5>
-                        <p>Learn the basics of reading Qur'aan with Tajweed rules.</p>
-                        <a href="#" class="btn btn-primary">Join Now</a>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card shadow-sm p-3 text-center border-0 course-card h-100">
-                        <h5 class="fw-bold">Class 2: Intermediate</h5>
-                        <p>Enhance your reading skills and understanding of verses.</p>
-                        <a href="#" class="btn btn-primary">Join Now</a>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card shadow-sm p-3 text-center border-0 course-card h-100">
-                        <h5 class="fw-bold">Class 3: Advanced</h5>
-                        <p>Deep dive into Qur'aan interpretation and memorization.</p>
-                        <a href="#" class="btn btn-primary">Join Now</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <footer class="bg-light text-center py-4 mt-5 shadow-sm">
-            &copy; 2025 Daar Al-Qur'aan. All rights reserved.
-        </footer>
-
-        <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
+      <div class="container">
+        <h1>دار القرآن</h1>
+        <a href="login.html">
+          <button class="login-btn">Login</button>
+        </a>
+      </div>
     </body>
 </html>

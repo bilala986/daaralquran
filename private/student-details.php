@@ -57,13 +57,12 @@ $fullname = $_SESSION['fullname'] ?? 'User';
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 top-controls">
 
                 <!-- Search (reduced width) -->
-                <div class="input-group" style="max-width: 300px;">
+                <div class="input-group me-3 mb-2" style="max-width: 300px;">
                     <input id="searchInput" type="text" class="form-control" placeholder="Search by name, email or phone...">
                 </div>
 
-
-                <!-- Controls (aligned right, dropdown removed) -->
-                <div class="d-flex gap-2">
+                <!-- Controls (aligned right, add spacing for mobile wrap) -->
+                <div class="d-flex align-items-center gap-2 mb-2">
                     <button id="refreshBtn" class="btn btn-outline-secondary btn-sm">
                         <i class="bi bi-arrow-clockwise"></i>
                     </button>
@@ -77,6 +76,7 @@ $fullname = $_SESSION['fullname'] ?? 'User';
                     </button>
                 </div>
             </div>
+
 
 
             <!-- Table -->
